@@ -1,9 +1,12 @@
 {
   "compilerOptions": {
+    "target": "ESNext",
+    "module": "CommonJS",
     "strict": true,
     "noImplicitAny": true,
     "noUnusedLocals": true,
-    "noUnusedParameters": false
+    "noUnusedParameters": false,
+    "esModuleInterop": true
   },
   "exclude": ["node_modules"]
 }

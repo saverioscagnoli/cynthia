@@ -2,6 +2,13 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "outDir": "dist",
+    "strict": false,
     "sourceMap": true,
+    "baseUrl": "./src",
+    "paths": {
+      "@structs": ["structs/index.ts"],
+      "@urls": ["lib/urls.ts"],
+      "@config": ["lib/config.ts"],
+    }
   }
 }

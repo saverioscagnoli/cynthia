@@ -4,19 +4,23 @@
   "main": "dist/index.js",
   "license": "MIT",
   "scripts": {
-    "dev": "ts-node src/index.ts",
-    "watch": "nodemon src/index.ts",
-    "build": "rimraf dist && tsc",
+    "dev": "ts-node -r tsconfig-paths/register src/index.ts",
+    "watch": "nodemon --exec ts-node -r tsconfig-paths/register src/index.ts",
+    "build": "rimraf dist && tsc && tsc-alias -p tsconfig.json",
     "start": "node ."
   },
   "dependencies": {
-    "cheerio": "^1.0.0-rc.12"
+    "cheerio": "^1.0.0-rc.12",
+    "undici": "^6.2.1"
   },
   "devDependencies": {
     "@types/node": "^20.10.6",
+    "@types/user-agents": "^1.0.4",
     "nodemon": "^3.0.2",
     "rimraf": "^5.0.5",
     "ts-node": "^10.9.2",
+    "tsc-alias": "^1.8.8",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.3.3"
   }
 }
