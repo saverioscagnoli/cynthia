@@ -1,11 +1,3 @@
-import { Scraper } from "@structs";
-import { Fandom } from "@urls";
+import { scrapePokemonIDs } from "@scripts";
 
-const scraper = new Scraper({ url: Fandom.PokemonList });
-
-
-scraper.on("loaded", $ => {
-  let title =  $(".mw-page-title-main").text();
-
-  console.log(title);
-});
+scrapePokemonIDs();

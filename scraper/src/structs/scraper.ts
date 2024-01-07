@@ -1,5 +1,6 @@
 import * as cheerio from "cheerio";
-import { request } from "undici";
+import fs from "fs";
+import { request, fetch } from "undici";
 import { EventEmitter } from "./event-emitter";
 import { Config } from "@config";
 
@@ -46,6 +47,18 @@ class Scraper extends EventEmitter<ScraperEvents> {
     return cheerio.load(html);
   }
 
+  protected async download(url: string, output: string): Promise<boolean> {
+    try {
+      let res = await fetch(url);
+      if (!res.ok) return false;
+
+      let bytes = await res.arrayBuffer();
+      fs.writeFileSync(output, Buffer.from(bytes));
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  }
 }
 
 export { Scraper };

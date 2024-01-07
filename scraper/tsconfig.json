@@ -9,6 +9,7 @@
       "@structs": ["structs/index.ts"],
       "@urls": ["lib/urls.ts"],
       "@config": ["lib/config.ts"],
+      "@scripts": ["scripts/index.ts"]
     }
   }
 }
