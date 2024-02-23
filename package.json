@@ -1,0 +1,12 @@
+{
+  "name": "cynthia",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/saverioscagnoli/cynthia.git",
+  "author": "Saverio <svscagn@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "workspaces": [
+    "csv"
+  ]
+}
