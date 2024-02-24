@@ -1,5 +1,6 @@
 import { DELIMITER } from "@consts";
 import { Entry, Value } from "@types";
+import csv from "csv-parser";
 import {
   existsSync,
   unlinkSync,
@@ -8,7 +9,6 @@ import {
   createWriteStream,
   createReadStream
 } from "fs";
-import split2 from "split2";
 
 interface CSVOptions<T extends string> {
   /**
@@ -39,6 +39,12 @@ class CSV<T extends string> {
     this.init(src, !!deletePrevious);
   }
 
+  /**
+   * Function to initialize the CSV file.
+   * @param src The source of the CSV file.
+   * @param deletePrevious Whether to delete the file with the same source if it exists.
+   * @private
+   */
   private init(src: PathLike, deletePrevious: boolean) {
     if (existsSync(src) && deletePrevious) {
       console.log("Deleting previous file...");
@@ -59,61 +65,72 @@ class CSV<T extends string> {
     return headers.map(h => h.replace(/^(n|b|s):|\?$/g, "").trim()) as T[];
   }
 
+  /**
+   * Function to read the CSV file.
+   * @param options The options to use when reading the CSV file.
+   * @returns A promise that resolves with the data from the CSV file.
+   */
   public async read(options: { limit?: number } = {}) {
     let data = [] as Entry<T>[];
-
-    let stream = createReadStream(this.src, { encoding: "utf-8" });
-
     let limit = options.limit || Infinity;
-    let first = true;
-
-    stream.pipe(split2()).on("data", (line: string) => {
-      if (first) {
-        first = false;
-        return;
-      }
-
-      if (data.length >= limit) {
-        stream.destroy();
-        return;
-      }
-
-      let values = line.split(DELIMITER);
-      let entry = {} as Record<string, unknown>;
-
-      for (let i = 0; i < values.length; i++) {
-        let value = values[i];
-        let valueLower = value.toLowerCase();
-        let parsed: Value;
-
-        if (!isNaN(+value)) {
-          parsed = +value;
-        } else if (valueLower === "true" || valueLower === "false") {
-          parsed = valueLower === "true";
-        } else if (["null", "undefined", ""].includes(valueLower)) {
-          parsed = null;
-        } else {
-          parsed = value;
-        }
-
-        entry[this.header[i]] = parsed;
-      }
-
-      data.push(entry as Entry<T>);
-    });
 
     return new Promise<Entry<T>[]>((res, rej) => {
-      stream.on("close", () => res(data));
-      stream.on("error", err => rej(err));
+      let first = false;
+
+      createReadStream(this.src)
+        .pipe(csv({ headers: this.header, separator: DELIMITER }))
+        .on("data", row => {
+          if (!first) {
+            first = true;
+            return;
+          }
+
+          data.push(row as Entry<T>);
+
+          for (let k in row) {
+            let value = row[k] as string;
+            let parsed: Value = null;
+
+            if (!isNaN(+value!)) {
+              parsed = +value;
+            } else if (value === "true") {
+              parsed = true;
+            } else if (value === "false") {
+              parsed = false;
+            } else if (value === "null") {
+              parsed = null;
+            } else {
+              parsed = value;
+            }
+
+            row[k] = parsed;
+          }
+
+          if (data.length === limit) {
+            res(data);
+          }
+        })
+        .on("end", () => res(data))
+        .on("error", err => rej(err));
     });
   }
 
+  /**
+   * Function to write to the CSV file.
+   * @param data The data to write to the CSV file.
+   * @returns A promise that resolves when the data has been written to the CSV file.
+   */
   public async write(data: Entry<T>[]) {
     let stream = createWriteStream(this.src, { flags: "a" });
 
     for (let i = 0; i < data.length; i++) {
       let entry = data[i] as Record<string, unknown>;
-      let values = this.header.map(header => entry[header]).join(DELIMITER);
+      let values = this.header
+        .map(header => {
+          let value = String(entry[header]);
+          return value.includes(",") ? `"${value}"` : value;
+        })
+        .join(DELIMITER);
 
       stream.write(values + "\n");
     }

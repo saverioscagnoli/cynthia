@@ -1,6 +1,6 @@
 import { CSV } from "../dist";
 import path from "path";
-import { test, it, expect, afterAll } from "vitest";
+import { test, expect, afterAll } from "vitest";
 import { faker } from "@faker-js/faker";
 import { describe } from "node:test";
 
@@ -47,6 +47,42 @@ describe("csv", () => {
     expect(read).toEqual(data);
   });
 
+  test("write values with commas", async () => {
+    let csv = new CSV({
+      src: path.join(__dirname, "write-commas.csv"),
+      header: ["s:name", "n:age"]
+    });
+
+    let data = [
+      { name: "John, Doe", age: 20 },
+      { name: "Jane, Doe", age: 20 }
+    ];
+
+    await csv.write(data);
+
+    let read = await csv.read();
+
+    expect(read).toEqual(data);
+  });
+
+  test("write values with quotes", async () => {
+    let csv = new CSV({
+      src: path.join(__dirname, "write-quotes.csv"),
+      header: ["s:name", "n:age"]
+    });
+
+    let data = [
+      { name: 'John "Doe"', age: 20 },
+      { name: 'Jane "Doe"', age: 20 }
+    ];
+
+    await csv.write(data);
+
+    let read = await csv.read();
+
+    expect(read).toEqual(data);
+  });
+
   test(
     "write large",
     async () => {
@@ -83,9 +119,13 @@ describe("csv", () => {
   );
 
   afterAll(() => {
-    let files = ["read.csv", "basic-write.csv", "write-large.csv"].map(file =>
-      path.join(__dirname, file)
-    );
+    let files = [
+      "read.csv",
+      "basic-write.csv",
+      "write-large.csv",
+      "write-commas.csv",
+      "write-quotes.csv"
+    ].map(file => path.join(__dirname, file));
 
     for (let file of files) {
       require("fs").unlinkSync(file);
