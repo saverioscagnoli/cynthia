@@ -1,10 +1,9 @@
 use core::panic;
+use futures::StreamExt;
 use std::{
     sync::{Arc, LazyLock, OnceLock},
-    time::{Duration, Instant},
+    time::Duration,
 };
-
-use futures::StreamExt;
 use tokio::sync::mpsc;
 use tokio_tungstenite::tungstenite::Message;
 
