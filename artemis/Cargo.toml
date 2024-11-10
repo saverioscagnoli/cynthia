@@ -1,0 +1,19 @@
+[package]
+name = "artemis"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.93"
+chrono = "0.4.38"
+colored = "2.1.0"
+futures = "0.3.31"
+reqwest = "0.12.9"
+serde = { version = "1.0.214", features = ["derive"] }
+serde_json = "1.0.132"
+tokio = { version = "1.41.1", features = ["full"] }
+tokio-tungstenite = { version = "0.24.0", features = ["native-tls"] }
+dotenv = "0.15.0"
+dotenv_codegen = "0.15.0"
+
+
