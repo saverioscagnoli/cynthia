@@ -21,9 +21,7 @@ impl DiscordHandler for Handler {
     }
 
     async fn message_create(&mut self, msg: api::message::Message) {
-        if msg.content == "!ping" {
-            msg.reply("Pong!").await;
-        }
+        println!("Message: {:?}", msg);
     }
 }
 
