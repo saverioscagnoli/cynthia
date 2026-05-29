@@ -11,15 +11,15 @@ import (
 
 const GatewayURL = "wss://gateway.discord.gg/"
 
-func StartHeartbeat(conn *websocket.Conn, intervalMs int, seq **int) {
+func StartHeartbeat(conn *websocket.Conn, intervalMs int, seq *int) {
 	ticker := time.NewTicker(time.Duration(intervalMs) * time.Millisecond)
 	defer ticker.Stop()
 
 	for range ticker.C {
 		var seqVal any = nil
 
-		if *seq != nil {
-			seqVal = **seq
+		if seq != nil {
+			seqVal = *seq
 		}
 
 		p, _ := json.Marshal(map[string]any{"op": payloads.OpHeartbeat, "d": seqVal})
