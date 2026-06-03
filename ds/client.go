@@ -98,6 +98,11 @@ func (c *Client) Start(token string) *error {
 				c.Emit(payload)
 			}
 
+		case payloads.OpHeartbeatACK:
+			{
+				slog.Debug("Heartbeat ack received.")
+			}
+
 		default:
 			{
 				slog.Warn("Unhandled opcode.", "op", payload.Op)

@@ -21,10 +21,20 @@ type Message struct {
 	Type            int               `json:"type"`
 	Activity        *MessageActivity  `json:"activity"`
 	// TODO: Application     *Application      `json:"application"`
-	ApplicationID       *Snowflake                  `json:"application_id"`
-	Flags               *int                        `json:"flags"`
-	MessageReference    *MessageReference           `json:"message_reference"`
-	MessageSnapshots    []MessageSnapshot           `json:"message_snapshots"`
-	ReferencedMessage   *Message                    `json:"referenced_message"`
-	InteractionMetadata *MessageInteractionMetadata `json:"interaction_metadata"`
+	ApplicationID        *Snowflake                  `json:"application_id"`
+	Flags                *int                        `json:"flags"`
+	MessageReference     *MessageReference           `json:"message_reference"`
+	MessageSnapshots     []MessageSnapshot           `json:"message_snapshots"`
+	ReferencedMessage    *Message                    `json:"referenced_message"`
+	InteractionMetadata  *MessageInteractionMetadata `json:"interaction_metadata"`
+	Thread               *Channel                    `json:"thread"`
+	Components           *[]MessageComponent         `json:"components"`
+	StickerItems         *[]StickerItem              `json:"sticker_items"`
+	Stickers             *[]Sticker                  `json:"stickers"`
+	Position             *int                        `json:"position"`
+	RoleSubscriptionData *RoleSubscriptionData       `json:"role_subscription_data"`
+	Resolved             *ResolvedData               `json:"resolved"`
+	Poll                 *Poll                       `json:"poll"`
+	Call                 *MessageCall                `json:"call"`
+	SharedClientTheme    *SharedClientTheme          `json:"shared_client_theme"`
 }
