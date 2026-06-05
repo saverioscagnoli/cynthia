@@ -1,8 +1,9 @@
 package main
 
 import (
-	"cynthia/ds"
-	"cynthia/ds/payloads"
+	"cynthia/dstypes"
+	"cynthia/gateway"
+	"cynthia/payloads"
 	"log/slog"
 	"os"
 
@@ -12,11 +13,22 @@ import (
 func main() {
 	godotenv.Load()
 
-	client := ds.NewClient()
+	client := gateway.NewClient()
+	token := os.Getenv("TOKEN")
 
-	ds.ReadyEvent.AddHandler(client, func(c *ds.Client, p payloads.Ready) {
+	gateway.ReadyEvent.AddHandler(client, func(c *gateway.Client, p payloads.Ready) {
 		slog.Info("Ready received!", "user", p.User.Username, "id", p.User.ID, "v", p.Version)
 	})
 
-	client.Start(os.Getenv("TOKEN"))
+	gateway.MessageCreate.AddHandler(client, func(c *gateway.Client, msg payloads.MessageCreate) {
+		if msg.Content == "!ping" {
+			err := c.SendMessage(msg.ChannelID, "pong!")
+
+			if err != nil {
+				slog.Error("Error while sending message", "err", err)
+			}
+		}
+	})
+
+	client.Start(token, dstypes.IntentsGuilds|dstypes.IntentsGuildMessages|dstypes.IntentsMessageContent)
 }

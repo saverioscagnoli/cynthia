@@ -1,0 +1,35 @@
+package dstypes
+
+type OAuth2Scope string
+
+const (
+	OAuth2ScopeActivitiesRead                        OAuth2Scope = "activities.read"
+	OAuth2ScopeActivitiesWrite                       OAuth2Scope = "activities.write"
+	OAuth2ScopeApplicationsBuildsRead                OAuth2Scope = "applications.builds.read"
+	OAuth2ScopeApplicationsBuildsUpload              OAuth2Scope = "applications.builds.upload"
+	OAuth2ScopeApplicationsCommands                  OAuth2Scope = "applications.commands"
+	OAuth2ScopeApplicationsCommandsUpdate            OAuth2Scope = "applications.commands.update"
+	OAuth2ScopeApplicationsCommandsPermissionsUpdate OAuth2Scope = "applications.commands.permissions.update"
+	OAuth2ScopeApplicationsEntitlements              OAuth2Scope = "applications.entitlements"
+	OAuth2ScopeApplicationsStoreUpdate               OAuth2Scope = "applications.store.update"
+	OAuth2ScopeBot                                   OAuth2Scope = "bot"
+	OAuth2ScopeConnections                           OAuth2Scope = "connections"
+	OAuth2ScopeDmChannelsRead                        OAuth2Scope = "dm_channels.read"
+	OAuth2ScopeEmail                                 OAuth2Scope = "email"
+	OAuth2ScopeGdmJoin                               OAuth2Scope = "gdm.join"
+	OAuth2ScopeGuilds                                OAuth2Scope = "guilds"
+	OAuth2ScopeGuildsJoin                            OAuth2Scope = "guilds.join"
+	OAuth2ScopeGuildsMembersRead                     OAuth2Scope = "guilds.members.read"
+	OAuth2ScopeIdentify                              OAuth2Scope = "identify"
+	OAuth2ScopeIdentifyPremium                       OAuth2Scope = "identify.premium"
+	OAuth2ScopeMessagesRead                          OAuth2Scope = "messages.read"
+	OAuth2ScopeRelationshipsRead                     OAuth2Scope = "relationships.read"
+	OAuth2ScopeRoleConnectionsWrite                  OAuth2Scope = "role_connections.write"
+	OAuth2ScopeRpc                                   OAuth2Scope = "rpc"
+	OAuth2ScopeRpcActivitiesWrite                    OAuth2Scope = "rpc.activities.write"
+	OAuth2ScopeRpcNotificationsRead                  OAuth2Scope = "rpc.notifications.read"
+	OAuth2ScopeRpcVoiceRead                          OAuth2Scope = "rpc.voice.read"
+	OAuth2ScopeRpcVoiceWrite                         OAuth2Scope = "rpc.voice.write"
+	OAuth2ScopeVoice                                 OAuth2Scope = "voice"
+	OAuth2ScopeWebhookIncoming                       OAuth2Scope = "webhook.incoming"
+)
