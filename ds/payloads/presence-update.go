@@ -1,6 +1,6 @@
 package payloads
 
-import "cynthia/dstypes"
+import "cynthia/ds/dstypes"
 
 type PresenceUpdate struct {
 	User         dstypes.User           `json:"user"`

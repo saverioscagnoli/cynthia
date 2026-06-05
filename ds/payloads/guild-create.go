@@ -1,7 +1,7 @@
 package payloads
 
 import (
-	"cynthia/dstypes"
+	"cynthia/ds/dstypes"
 )
 
 type GuildCreate struct {

@@ -1,5 +1,5 @@
 package payloads
 
-import "cynthia/dstypes"
+import "cynthia/ds/dstypes"
 
 type ThreadUpdate dstypes.Channel

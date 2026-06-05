@@ -1,6 +1,6 @@
 package payloads
 
-import "cynthia/dstypes"
+import "cynthia/ds/dstypes"
 
 type VoiceServerUpdate struct {
 	Token    string            `json:"token"`

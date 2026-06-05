@@ -1,6 +1,6 @@
 package payloads
 
-import "cynthia/dstypes"
+import "cynthia/ds/dstypes"
 
 type GuildRoleUpdate struct {
 	GuildID dstypes.Snowflake `json:"guild_id"`

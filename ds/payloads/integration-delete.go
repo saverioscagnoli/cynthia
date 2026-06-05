@@ -1,6 +1,6 @@
 package payloads
 
-import "cynthia/dstypes"
+import "cynthia/ds/dstypes"
 
 type IntegrationDelete struct {
 	ID            dstypes.Snowflake  `json:"id"`

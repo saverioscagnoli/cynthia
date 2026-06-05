@@ -1,5 +1,5 @@
 package payloads
 
-import "cynthia/dstypes"
+import "cynthia/ds/dstypes"
 
 type GuildScheduledEventUpdate dstypes.GuildScheduledEvent

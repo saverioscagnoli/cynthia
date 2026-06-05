@@ -1,6 +1,6 @@
 package payloads
 
-import "cynthia/dstypes"
+import "cynthia/ds/dstypes"
 
 type MessageReactionRemoveAll struct {
 	ChannelID dstypes.Snowflake  `json:"channel_id"`

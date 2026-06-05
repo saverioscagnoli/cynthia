@@ -1,6 +1,6 @@
 package payloads
 
-import "cynthia/dstypes"
+import "cynthia/ds/dstypes"
 
 type MessagePollVoteAdd struct {
 	UserID    dstypes.Snowflake  `json:"user_id"`

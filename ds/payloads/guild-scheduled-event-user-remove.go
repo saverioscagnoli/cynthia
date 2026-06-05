@@ -1,6 +1,6 @@
 package payloads
 
-import "cynthia/dstypes"
+import "cynthia/ds/dstypes"
 
 type GuildScheduledEventUserRemove struct {
 	GuildScheduledEventUserID dstypes.Snowflake `json:"guild_scheduled_event_id"`
