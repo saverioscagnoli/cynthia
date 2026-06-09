@@ -5,6 +5,7 @@ import (
 	"cynthia/ds/dstypes"
 	"cynthia/ds/events"
 	"cynthia/ds/payloads"
+	"cynthia/util"
 	"encoding/json"
 	"log/slog"
 	"sync"
@@ -142,4 +143,15 @@ func (c *Client) Latency() time.Duration {
 
 func (c *Client) SendMessage(channelID dstypes.Snowflake, content string) error {
 	return api.SendMessageContent(c.token, channelID, content)
+}
+
+func (c *Client) SendEmbed(channelID dstypes.Snowflake, embed dstypes.Embed) error {
+	e := util.NewVector[dstypes.Embed]()
+	e.Push(embed)
+
+	return api.SendMessageEmbeds(c.token, channelID, e)
+}
+
+func (c *Client) SendEmbeds(channelID dstypes.Snowflake, embeds *util.Vector[dstypes.Embed]) error {
+	return api.SendMessageEmbeds(c.token, channelID, embeds)
 }

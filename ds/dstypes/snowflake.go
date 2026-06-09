@@ -1,3 +1,3 @@
 package dstypes
 
-type Snowflake string
+type Snowflake = string

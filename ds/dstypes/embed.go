@@ -16,3 +16,40 @@ type Embed struct {
 	Fields      []EmbedField   `json:"fields"`
 	Flags       *int           `json:"flags"`
 }
+
+type EmbedBuilder struct {
+	embed Embed
+}
+
+func strPtr(s string) *string { return &s }
+func intPtr(i int) *int       { return &i }
+
+func NewEmbed() *EmbedBuilder {
+	return &EmbedBuilder{
+		embed: Embed{},
+	}
+}
+
+func (b *EmbedBuilder) Title(t string) *EmbedBuilder {
+	b.embed.Title = strPtr(t)
+	return b
+}
+
+func (b *EmbedBuilder) Description(d string) *EmbedBuilder {
+	b.embed.Description = strPtr(d)
+	return b
+}
+
+func (b *EmbedBuilder) URL(u string) *EmbedBuilder {
+	b.embed.URL = strPtr(u)
+	return b
+}
+
+func (b *EmbedBuilder) Color(c int) *EmbedBuilder {
+	b.embed.Color = intPtr(c)
+	return b
+}
+
+func (b *EmbedBuilder) Build() Embed {
+	return b.embed
+}
