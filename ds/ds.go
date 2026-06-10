@@ -2,6 +2,7 @@ package ds
 
 import "cynthia/ds/gateway"
 
-var NewClient = gateway.NewClient
-
 type Client = gateway.Client
+
+var NewClient = gateway.NewClient
+var On = gateway.On[any]

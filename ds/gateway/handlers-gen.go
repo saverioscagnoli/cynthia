@@ -2,330 +2,330 @@
 package gateway
 
 import "cynthia/ds/payloads"
-import "cynthia/ds/events"
+import "cynthia/ds/dsevents"
 
 
 func (c *Client) OnHello(handler func(c *Client, p payloads.Hello)) {
-	on(c, events.Hello, handler)
+	On(c, dsevents.Hello, handler)
 }
 
 func (c *Client) OnReady(handler func(c *Client, p payloads.Ready)) {
-	on(c, events.Ready, handler)
+	On(c, dsevents.Ready, handler)
 }
 
 func (c *Client) OnResumed(handler func(c *Client, p payloads.Resumed)) {
-	on(c, events.Resumed, handler)
+	On(c, dsevents.Resumed, handler)
 }
 
 func (c *Client) OnReconnect(handler func(c *Client, p payloads.Reconnect)) {
-	on(c, events.Reconnect, handler)
+	On(c, dsevents.Reconnect, handler)
 }
 
 func (c *Client) OnRateLimited(handler func(c *Client, p payloads.RateLimited)) {
-	on(c, events.RateLimited, handler)
+	On(c, dsevents.RateLimited, handler)
 }
 
 func (c *Client) OnInvalidSession(handler func(c *Client, p payloads.InvalidSession)) {
-	on(c, events.InvalidSession, handler)
+	On(c, dsevents.InvalidSession, handler)
 }
 
 func (c *Client) OnApplicationCommandPermissionsUpdate(handler func(c *Client, p payloads.ApplicationCommandPermissionsUpdate)) {
-	on(c, events.ApplicationCommandPermissionsUpdate, handler)
+	On(c, dsevents.ApplicationCommandPermissionsUpdate, handler)
 }
 
 func (c *Client) OnAutoModerationRuleCreate(handler func(c *Client, p payloads.AutoModerationRuleCreate)) {
-	on(c, events.AutoModerationRuleCreate, handler)
+	On(c, dsevents.AutoModerationRuleCreate, handler)
 }
 
 func (c *Client) OnAutoModerationRuleUpdate(handler func(c *Client, p payloads.AutoModerationRuleUpdate)) {
-	on(c, events.AutoModerationRuleUpdate, handler)
+	On(c, dsevents.AutoModerationRuleUpdate, handler)
 }
 
 func (c *Client) OnAutoModerationRuleDelete(handler func(c *Client, p payloads.AutoModerationRuleDelete)) {
-	on(c, events.AutoModerationRuleDelete, handler)
+	On(c, dsevents.AutoModerationRuleDelete, handler)
 }
 
 func (c *Client) OnAutoModerationActionExecution(handler func(c *Client, p payloads.AutoModerationActionExecution)) {
-	on(c, events.AutoModerationActionExecution, handler)
+	On(c, dsevents.AutoModerationActionExecution, handler)
 }
 
 func (c *Client) OnChannelCreate(handler func(c *Client, p payloads.ChannelCreate)) {
-	on(c, events.ChannelCreate, handler)
+	On(c, dsevents.ChannelCreate, handler)
 }
 
 func (c *Client) OnChannelUpdate(handler func(c *Client, p payloads.ChannelUpdate)) {
-	on(c, events.ChannelUpdate, handler)
+	On(c, dsevents.ChannelUpdate, handler)
 }
 
 func (c *Client) OnChannelDelete(handler func(c *Client, p payloads.ChannelDelete)) {
-	on(c, events.ChannelDelete, handler)
+	On(c, dsevents.ChannelDelete, handler)
 }
 
 func (c *Client) OnChannelInfo(handler func(c *Client, p payloads.ChannelInfo)) {
-	on(c, events.ChannelInfo, handler)
+	On(c, dsevents.ChannelInfo, handler)
 }
 
 func (c *Client) OnChannelPinsUpdate(handler func(c *Client, p payloads.ChannelPinsUpdate)) {
-	on(c, events.ChannelPinsUpdate, handler)
+	On(c, dsevents.ChannelPinsUpdate, handler)
 }
 
 func (c *Client) OnThreadCreate(handler func(c *Client, p payloads.ThreadCreate)) {
-	on(c, events.ThreadCreate, handler)
+	On(c, dsevents.ThreadCreate, handler)
 }
 
 func (c *Client) OnThreadUpdate(handler func(c *Client, p payloads.ThreadUpdate)) {
-	on(c, events.ThreadUpdate, handler)
+	On(c, dsevents.ThreadUpdate, handler)
 }
 
 func (c *Client) OnThreadDelete(handler func(c *Client, p payloads.ThreadDelete)) {
-	on(c, events.ThreadDelete, handler)
+	On(c, dsevents.ThreadDelete, handler)
 }
 
 func (c *Client) OnThreadListSync(handler func(c *Client, p payloads.ThreadListSync)) {
-	on(c, events.ThreadListSync, handler)
+	On(c, dsevents.ThreadListSync, handler)
 }
 
 func (c *Client) OnThreadMemberUpdate(handler func(c *Client, p payloads.ThreadMemberUpdate)) {
-	on(c, events.ThreadMemberUpdate, handler)
+	On(c, dsevents.ThreadMemberUpdate, handler)
 }
 
 func (c *Client) OnThreadMembersUpdate(handler func(c *Client, p payloads.ThreadMembersUpdate)) {
-	on(c, events.ThreadMembersUpdate, handler)
+	On(c, dsevents.ThreadMembersUpdate, handler)
 }
 
 func (c *Client) OnEntitlementCreate(handler func(c *Client, p payloads.EntitlementCreate)) {
-	on(c, events.EntitlementCreate, handler)
+	On(c, dsevents.EntitlementCreate, handler)
 }
 
 func (c *Client) OnEntitlementUpdate(handler func(c *Client, p payloads.EntitlementUpdate)) {
-	on(c, events.EntitlementUpdate, handler)
+	On(c, dsevents.EntitlementUpdate, handler)
 }
 
 func (c *Client) OnEntitlementDelete(handler func(c *Client, p payloads.EntitlementDelete)) {
-	on(c, events.EntitlementDelete, handler)
+	On(c, dsevents.EntitlementDelete, handler)
 }
 
 func (c *Client) OnGuildCreate(handler func(c *Client, p payloads.GuildCreate)) {
-	on(c, events.GuildCreate, handler)
+	On(c, dsevents.GuildCreate, handler)
 }
 
 func (c *Client) OnGuildUpdate(handler func(c *Client, p payloads.GuildUpdate)) {
-	on(c, events.GuildUpdate, handler)
+	On(c, dsevents.GuildUpdate, handler)
 }
 
 func (c *Client) OnGuildDelete(handler func(c *Client, p payloads.GuildDelete)) {
-	on(c, events.GuildDelete, handler)
+	On(c, dsevents.GuildDelete, handler)
 }
 
 func (c *Client) OnGuildAuditLogEntryCreate(handler func(c *Client, p payloads.GuildAuditLogEntryCreate)) {
-	on(c, events.GuildAuditLogEntryCreate, handler)
+	On(c, dsevents.GuildAuditLogEntryCreate, handler)
 }
 
 func (c *Client) OnGuildBanAdd(handler func(c *Client, p payloads.GuildBanAdd)) {
-	on(c, events.GuildBanAdd, handler)
+	On(c, dsevents.GuildBanAdd, handler)
 }
 
 func (c *Client) OnGuildBanRemove(handler func(c *Client, p payloads.GuildBanRemove)) {
-	on(c, events.GuildBanRemove, handler)
+	On(c, dsevents.GuildBanRemove, handler)
 }
 
 func (c *Client) OnGuildEmojisUpdate(handler func(c *Client, p payloads.GuildEmojisUpdate)) {
-	on(c, events.GuildEmojisUpdate, handler)
+	On(c, dsevents.GuildEmojisUpdate, handler)
 }
 
 func (c *Client) OnGuildStickersUpdate(handler func(c *Client, p payloads.GuildStickersUpdate)) {
-	on(c, events.GuildStickersUpdate, handler)
+	On(c, dsevents.GuildStickersUpdate, handler)
 }
 
 func (c *Client) OnGuildIntegrationsUpdate(handler func(c *Client, p payloads.GuildIntegrationsUpdate)) {
-	on(c, events.GuildIntegrationsUpdate, handler)
+	On(c, dsevents.GuildIntegrationsUpdate, handler)
 }
 
 func (c *Client) OnGuildMemberAdd(handler func(c *Client, p payloads.GuildMemberAdd)) {
-	on(c, events.GuildMemberAdd, handler)
+	On(c, dsevents.GuildMemberAdd, handler)
 }
 
 func (c *Client) OnGuildMemberRemove(handler func(c *Client, p payloads.GuildMemberRemove)) {
-	on(c, events.GuildMemberRemove, handler)
+	On(c, dsevents.GuildMemberRemove, handler)
 }
 
 func (c *Client) OnGuildMemberUpdate(handler func(c *Client, p payloads.GuildMemberUpdate)) {
-	on(c, events.GuildMemberUpdate, handler)
+	On(c, dsevents.GuildMemberUpdate, handler)
 }
 
 func (c *Client) OnGuildMembersChunk(handler func(c *Client, p payloads.GuildMembersChunk)) {
-	on(c, events.GuildMembersChunk, handler)
+	On(c, dsevents.GuildMembersChunk, handler)
 }
 
 func (c *Client) OnGuildRoleCreate(handler func(c *Client, p payloads.GuildRoleCreate)) {
-	on(c, events.GuildRoleCreate, handler)
+	On(c, dsevents.GuildRoleCreate, handler)
 }
 
 func (c *Client) OnGuildRoleUpdate(handler func(c *Client, p payloads.GuildRoleUpdate)) {
-	on(c, events.GuildRoleUpdate, handler)
+	On(c, dsevents.GuildRoleUpdate, handler)
 }
 
 func (c *Client) OnGuildRoleDelete(handler func(c *Client, p payloads.GuildRoleDelete)) {
-	on(c, events.GuildRoleDelete, handler)
+	On(c, dsevents.GuildRoleDelete, handler)
 }
 
 func (c *Client) OnGuildScheduledEventCreate(handler func(c *Client, p payloads.GuildScheduledEventCreate)) {
-	on(c, events.GuildScheduledEventCreate, handler)
+	On(c, dsevents.GuildScheduledEventCreate, handler)
 }
 
 func (c *Client) OnGuildScheduledEventUpdate(handler func(c *Client, p payloads.GuildScheduledEventUpdate)) {
-	on(c, events.GuildScheduledEventUpdate, handler)
+	On(c, dsevents.GuildScheduledEventUpdate, handler)
 }
 
 func (c *Client) OnGuildScheduledEventDelete(handler func(c *Client, p payloads.GuildScheduledEventDelete)) {
-	on(c, events.GuildScheduledEventDelete, handler)
+	On(c, dsevents.GuildScheduledEventDelete, handler)
 }
 
 func (c *Client) OnGuildScheduledEventUserAdd(handler func(c *Client, p payloads.GuildScheduledEventUserAdd)) {
-	on(c, events.GuildScheduledEventUserAdd, handler)
+	On(c, dsevents.GuildScheduledEventUserAdd, handler)
 }
 
 func (c *Client) OnGuildScheduledEventUserRemove(handler func(c *Client, p payloads.GuildScheduledEventUserRemove)) {
-	on(c, events.GuildScheduledEventUserRemove, handler)
+	On(c, dsevents.GuildScheduledEventUserRemove, handler)
 }
 
 func (c *Client) OnGuildSoundboardSoundCreate(handler func(c *Client, p payloads.GuildSoundboardSoundCreate)) {
-	on(c, events.GuildSoundboardSoundCreate, handler)
+	On(c, dsevents.GuildSoundboardSoundCreate, handler)
 }
 
 func (c *Client) OnGuildSoundboardSoundUpdate(handler func(c *Client, p payloads.GuildSoundboardSoundUpdate)) {
-	on(c, events.GuildSoundboardSoundUpdate, handler)
+	On(c, dsevents.GuildSoundboardSoundUpdate, handler)
 }
 
 func (c *Client) OnGuildSoundboardSoundDelete(handler func(c *Client, p payloads.GuildSoundboardSoundDelete)) {
-	on(c, events.GuildSoundboardSoundDelete, handler)
+	On(c, dsevents.GuildSoundboardSoundDelete, handler)
 }
 
 func (c *Client) OnGuildSoundboardSoundsUpdate(handler func(c *Client, p payloads.GuildSoundboardSoundsUpdate)) {
-	on(c, events.GuildSoundboardSoundsUpdate, handler)
+	On(c, dsevents.GuildSoundboardSoundsUpdate, handler)
 }
 
 func (c *Client) OnSoundboardSounds(handler func(c *Client, p payloads.SoundboardSounds)) {
-	on(c, events.SoundboardSounds, handler)
+	On(c, dsevents.SoundboardSounds, handler)
 }
 
 func (c *Client) OnIntegrationCreate(handler func(c *Client, p payloads.IntegrationCreate)) {
-	on(c, events.IntegrationCreate, handler)
+	On(c, dsevents.IntegrationCreate, handler)
 }
 
 func (c *Client) OnIntegrationUpdate(handler func(c *Client, p payloads.IntegrationUpdate)) {
-	on(c, events.IntegrationUpdate, handler)
+	On(c, dsevents.IntegrationUpdate, handler)
 }
 
 func (c *Client) OnIntegrationDelete(handler func(c *Client, p payloads.IntegrationDelete)) {
-	on(c, events.IntegrationDelete, handler)
+	On(c, dsevents.IntegrationDelete, handler)
 }
 
 func (c *Client) OnInteractionCreate(handler func(c *Client, p payloads.InteractionCreate)) {
-	on(c, events.InteractionCreate, handler)
+	On(c, dsevents.InteractionCreate, handler)
 }
 
 func (c *Client) OnInviteCreate(handler func(c *Client, p payloads.InviteCreate)) {
-	on(c, events.InviteCreate, handler)
+	On(c, dsevents.InviteCreate, handler)
 }
 
 func (c *Client) OnInviteDelete(handler func(c *Client, p payloads.InviteDelete)) {
-	on(c, events.InviteDelete, handler)
+	On(c, dsevents.InviteDelete, handler)
 }
 
 func (c *Client) OnMessageCreate(handler func(c *Client, p payloads.MessageCreate)) {
-	on(c, events.MessageCreate, handler)
+	On(c, dsevents.MessageCreate, handler)
 }
 
 func (c *Client) OnMessageUpdate(handler func(c *Client, p payloads.MessageUpdate)) {
-	on(c, events.MessageUpdate, handler)
+	On(c, dsevents.MessageUpdate, handler)
 }
 
 func (c *Client) OnMessageDelete(handler func(c *Client, p payloads.MessageDelete)) {
-	on(c, events.MessageDelete, handler)
+	On(c, dsevents.MessageDelete, handler)
 }
 
 func (c *Client) OnMessageDeleteBulk(handler func(c *Client, p payloads.MessageDeleteBulk)) {
-	on(c, events.MessageDeleteBulk, handler)
+	On(c, dsevents.MessageDeleteBulk, handler)
 }
 
 func (c *Client) OnMessageReactionAdd(handler func(c *Client, p payloads.MessageReactionAdd)) {
-	on(c, events.MessageReactionAdd, handler)
+	On(c, dsevents.MessageReactionAdd, handler)
 }
 
 func (c *Client) OnMessageReactionRemove(handler func(c *Client, p payloads.MessageReactionRemove)) {
-	on(c, events.MessageReactionRemove, handler)
+	On(c, dsevents.MessageReactionRemove, handler)
 }
 
 func (c *Client) OnMessageReactionRemoveAll(handler func(c *Client, p payloads.MessageReactionRemoveAll)) {
-	on(c, events.MessageReactionRemoveAll, handler)
+	On(c, dsevents.MessageReactionRemoveAll, handler)
 }
 
 func (c *Client) OnMessageReactionRemoveEmoji(handler func(c *Client, p payloads.MessageReactionRemoveEmoji)) {
-	on(c, events.MessageReactionRemoveEmoji, handler)
+	On(c, dsevents.MessageReactionRemoveEmoji, handler)
 }
 
 func (c *Client) OnPresenceUpdate(handler func(c *Client, p payloads.PresenceUpdate)) {
-	on(c, events.PresenceUpdate, handler)
+	On(c, dsevents.PresenceUpdate, handler)
 }
 
 func (c *Client) OnStageInstanceCreate(handler func(c *Client, p payloads.StageInstanceCreate)) {
-	on(c, events.StageInstanceCreate, handler)
+	On(c, dsevents.StageInstanceCreate, handler)
 }
 
 func (c *Client) OnStageInstanceUpdate(handler func(c *Client, p payloads.StageInstanceUpdate)) {
-	on(c, events.StageInstanceUpdate, handler)
+	On(c, dsevents.StageInstanceUpdate, handler)
 }
 
 func (c *Client) OnStageInstanceDelete(handler func(c *Client, p payloads.StageInstanceDelete)) {
-	on(c, events.StageInstanceDelete, handler)
+	On(c, dsevents.StageInstanceDelete, handler)
 }
 
 func (c *Client) OnSubscriptionCreate(handler func(c *Client, p payloads.SubscriptionCreate)) {
-	on(c, events.SubscriptionCreate, handler)
+	On(c, dsevents.SubscriptionCreate, handler)
 }
 
 func (c *Client) OnSubscriptionUpdate(handler func(c *Client, p payloads.SubscriptionUpdate)) {
-	on(c, events.SubscriptionUpdate, handler)
+	On(c, dsevents.SubscriptionUpdate, handler)
 }
 
 func (c *Client) OnSubscriptionDelete(handler func(c *Client, p payloads.SubscriptionDelete)) {
-	on(c, events.SubscriptionDelete, handler)
+	On(c, dsevents.SubscriptionDelete, handler)
 }
 
 func (c *Client) OnTypingStart(handler func(c *Client, p payloads.TypingStart)) {
-	on(c, events.TypingStart, handler)
+	On(c, dsevents.TypingStart, handler)
 }
 
 func (c *Client) OnUserUpdate(handler func(c *Client, p payloads.UserUpdate)) {
-	on(c, events.UserUpdate, handler)
+	On(c, dsevents.UserUpdate, handler)
 }
 
 func (c *Client) OnVoiceChannelEffectSend(handler func(c *Client, p payloads.VoiceChannelEffectSend)) {
-	on(c, events.VoiceChannelEffectSend, handler)
+	On(c, dsevents.VoiceChannelEffectSend, handler)
 }
 
 func (c *Client) OnVoiceChannelStartTimeUpdate(handler func(c *Client, p payloads.VoiceChannelStartTimeUpdate)) {
-	on(c, events.VoiceChannelStartTimeUpdate, handler)
+	On(c, dsevents.VoiceChannelStartTimeUpdate, handler)
 }
 
 func (c *Client) OnVoiceStateUpdate(handler func(c *Client, p payloads.VoiceStateUpdate)) {
-	on(c, events.VoiceStateUpdate, handler)
+	On(c, dsevents.VoiceStateUpdate, handler)
 }
 
 func (c *Client) OnVoiceServerUpdate(handler func(c *Client, p payloads.VoiceServerUpdate)) {
-	on(c, events.VoiceServerUpdate, handler)
+	On(c, dsevents.VoiceServerUpdate, handler)
 }
 
 func (c *Client) OnWebhooksUpdate(handler func(c *Client, p payloads.WebhooksUpdate)) {
-	on(c, events.WebhooksUpdate, handler)
+	On(c, dsevents.WebhooksUpdate, handler)
 }
 
 func (c *Client) OnMessagePollVoteAdd(handler func(c *Client, p payloads.MessagePollVoteAdd)) {
-	on(c, events.MessagePollVoteAdd, handler)
+	On(c, dsevents.MessagePollVoteAdd, handler)
 }
 
 func (c *Client) OnMessagePollVoteRemove(handler func(c *Client, p payloads.MessagePollVoteRemove)) {
-	on(c, events.MessagePollVoteRemove, handler)
+	On(c, dsevents.MessagePollVoteRemove, handler)
 }
 

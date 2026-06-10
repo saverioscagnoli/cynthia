@@ -1,4 +1,4 @@
-package events
+package dsevents
 
 type EventName string
 

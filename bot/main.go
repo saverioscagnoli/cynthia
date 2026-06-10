@@ -18,7 +18,11 @@ func registerEventHandlers(client *ds.Client) {
 	client.OnMessageCreate(handlers.OnMessageCreate)
 	client.OnInteractionCreate(handlers.InteractionCreate)
 
-	slog.Info("Registered 3 event handlders.")
+	slog.Info("Registered event handlders.", "count", 3)
+}
+
+func registerInteractionCommandHandlersGuild(client *ds.Client) {
+
 }
 
 func main() {
@@ -33,11 +37,22 @@ func main() {
 	client := ds.NewClient(os.Getenv("TOKEN"), os.Getenv("APP_ID"))
 
 	registerEventHandlers(client)
+	slog.Info("Registered interaction command handlers", "count", len(handlers.InteractionCommandHandlers))
 
-	err := client.CreateGuildCommand(dsapi.CreateGuildCommandBody{
-		Name:        "ping",
-		Description: "bruh",
-	}, os.Getenv("TEST_GUILD"))
+	client.Api.ClearGuildCommands(os.Getenv("TEST_GUILD"))
+
+	slog.Warn("Cleared all previous guild commands")
+
+	err := client.Api.BulkOverwriteGuildCommands(dstypes.Snowflake(os.Getenv("TEST_GUILD")), []dsapi.CreateGuildCommandBody{
+		{
+			Name:        "ping",
+			Description: "bruh",
+		},
+		{
+			Name:        "twoplustwo",
+			Description: "Four!",
+		},
+	})
 
 	if err != nil {
 		slog.Error("Failed to create guild command", "error", err)
