@@ -1,5 +1,7 @@
 package dstypes
 
+import "cynthia/util"
+
 type MessageComponent interface {
 	Type() int
 	ID() *int
@@ -38,6 +40,10 @@ const (
 	ComponentTypeCheckbox          = 23
 )
 
+func (c *ComponentType) UnmarshalJSON(data []byte) error {
+	return util.UnmarshalNumeric(data, c)
+}
+
 type ActionRow struct {
 	ComponentBase
 	Components []MessageComponent `json:"components"`
@@ -53,6 +59,10 @@ const (
 	ButtonStyleLink      = 5
 	ButtonStylePremium   = 6
 )
+
+func (b *ButtonStyle) UnmarshalJSON(data []byte) error {
+	return util.UnmarshalNumeric(data, b)
+}
 
 type Button struct {
 	ComponentBase
@@ -95,6 +105,10 @@ const (
 	TextInputStyleShort     = 1
 	TextInputStyleParagraph = 2
 )
+
+func (t *TextInputStyle) UnmarshalJSON(data []byte) error {
+	return util.UnmarshalNumeric(data, t)
+}
 
 type TextInput struct {
 	ComponentBase

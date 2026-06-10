@@ -1,5 +1,7 @@
 package dstypes
 
+import "cynthia/util"
+
 type AutoModerationActionType int
 
 const (
@@ -8,3 +10,7 @@ const (
 	AutoModerationActionTypeTimeout                AutoModerationActionType = 3
 	AutoModerationActionTypeBlockMemberInteraction AutoModerationActionType = 4
 )
+
+func (a *AutoModerationActionType) UnmarshalJSON(b []byte) error {
+	return util.UnmarshalNumeric(b, a)
+}

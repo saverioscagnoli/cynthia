@@ -1,13 +1,19 @@
 package dstypes
 
-type StickerType = int
+import "cynthia/util"
+
+type StickerType int
 
 const (
 	StickerTypeStandard StickerType = 1
 	StickerTypeGuild    StickerType = 2
 )
 
-type StickerFormatType = int
+func (t *StickerType) UnmarshalJSON(data []byte) error {
+	return util.UnmarshalNumeric(data, t)
+}
+
+type StickerFormatType int
 
 const (
 	StickerFormatTypePng    StickerFormatType = 1
@@ -15,6 +21,10 @@ const (
 	StickerFormatTypeLottie StickerFormatType = 3
 	StickerFormatTypeGif    StickerFormatType = 4
 )
+
+func (t *StickerFormatType) UnmarshalJSON(data []byte) error {
+	return util.UnmarshalNumeric(data, t)
+}
 
 type Sticker struct {
 	ID          Snowflake         `json:"id"`

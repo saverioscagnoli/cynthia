@@ -1,5 +1,7 @@
 package dstypes
 
+import "cynthia/util"
+
 type AuditLogEvent int
 
 const (
@@ -92,3 +94,7 @@ const (
 	AuditLogEventVoiceChannelStatusUpdate AuditLogEvent = 192
 	AuditLogEventVoiceChannelStatusDelete AuditLogEvent = 193
 )
+
+func (a *AuditLogEvent) UnmarshalJSON(b []byte) error {
+	return util.UnmarshalNumeric(b, a)
+}

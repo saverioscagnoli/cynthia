@@ -8,7 +8,7 @@ type Embed struct {
 	Timestamp   *string        `json:"timestamp"`
 	Color       *int           `json:"color"`
 	Footer      *EmbedFooter   `json:"footer"`
-	Image       *EmbedImage    `json:"embed_image"`
+	Image       *EmbedImage    `json:"image"`
 	Thumbnail   *EmbedImage    `json:"thumbnail"`
 	Video       *EmbedVideo    `json:"video"`
 	Provider    *EmbedProvider `json:"provider"`
@@ -47,6 +47,21 @@ func (b *EmbedBuilder) URL(u string) *EmbedBuilder {
 
 func (b *EmbedBuilder) Color(c int) *EmbedBuilder {
 	b.embed.Color = intPtr(c)
+	return b
+}
+
+func (b *EmbedBuilder) Image(url string) *EmbedBuilder {
+	b.embed.Image = &EmbedImage{URL: url}
+	return b
+}
+
+func (b *EmbedBuilder) Thumbnail(url string) *EmbedBuilder {
+	b.embed.Thumbnail = &EmbedImage{URL: url}
+	return b
+}
+
+func (b *EmbedBuilder) Video(url string) *EmbedBuilder {
+	b.embed.Video = &EmbedVideo{URL: url}
 	return b
 }
 

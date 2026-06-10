@@ -1,5 +1,7 @@
 package dstypes
 
+import "cynthia/util"
+
 type OAuth2Scope string
 
 const (
@@ -33,3 +35,7 @@ const (
 	OAuth2ScopeVoice                                 OAuth2Scope = "voice"
 	OAuth2ScopeWebhookIncoming                       OAuth2Scope = "webhook.incoming"
 )
+
+func (s *OAuth2Scope) UnmarshalJSON(data []byte) error {
+	return util.UnmarshalString(data, s)
+}

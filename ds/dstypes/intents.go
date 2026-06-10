@@ -1,5 +1,7 @@
 package dstypes
 
+import "cynthia/util"
+
 type Intents int
 
 const (
@@ -25,3 +27,7 @@ const (
 	IntentsGuildMessagePolls           Intents = 1 << 24
 	IntentsDirectMessagePolls          Intents = 1 << 25
 )
+
+func (e *Intents) UnmarshalJSON(b []byte) error {
+	return util.UnmarshalNumeric(b, e)
+}

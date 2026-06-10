@@ -1,5 +1,9 @@
 package dstypes
 
+import (
+	"cynthia/util"
+)
+
 type ActivityFlags int
 
 const (
@@ -13,3 +17,7 @@ const (
 	ActivityFlagPartyPrivacyVoiceChannel = 1 << 7
 	ActivityFlagEmbedded                 = 1 << 8
 )
+
+func (f *ActivityFlags) UnmarshalJSON(b []byte) error {
+	return util.UnmarshalNumeric(b, f)
+}

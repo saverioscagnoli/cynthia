@@ -1,5 +1,7 @@
 package dstypes
 
+import "cynthia/util"
+
 type GuildFeature string
 
 const (
@@ -36,3 +38,7 @@ const (
 	GuildFeatureGuildTags                             GuildFeature = "GUILD_TAGS"
 	GuildFeatureEnhancedRoleColors                    GuildFeature = "ENHANCED_ROLE_COLORS"
 )
+
+func (e *GuildFeature) UnmarshalJSON(b []byte) error {
+	return util.UnmarshalString(b, e)
+}

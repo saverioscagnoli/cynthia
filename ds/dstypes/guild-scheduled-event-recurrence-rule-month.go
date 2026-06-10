@@ -1,5 +1,7 @@
 package dstypes
 
+import "cynthia/util"
+
 type GuildScheduledEventRecurrenceRuleMonth int
 
 const (
@@ -16,3 +18,7 @@ const (
 	GuildScheduledEventRecurrenceRuleMonthNovember  GuildScheduledEventRecurrenceRuleMonth = 11
 	GuildScheduledEventRecurrenceRuleMonthDecember  GuildScheduledEventRecurrenceRuleMonth = 12
 )
+
+func (e *GuildScheduledEventRecurrenceRuleMonth) UnmarshalJSON(b []byte) error {
+	return util.UnmarshalNumeric(b, e)
+}

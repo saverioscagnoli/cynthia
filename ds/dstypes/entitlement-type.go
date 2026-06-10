@@ -1,5 +1,7 @@
 package dstypes
 
+import "cynthia/util"
+
 type EntitlementType int
 
 const (
@@ -12,3 +14,7 @@ const (
 	EntitlementTypePremiumPurchase         EntitlementType = 7
 	EntitlementTypeApplicationSubscription EntitlementType = 8
 )
+
+func (e *EntitlementType) UnmarshalJSON(b []byte) error {
+	return util.UnmarshalNumeric(b, e)
+}

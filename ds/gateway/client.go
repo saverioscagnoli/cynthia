@@ -1,13 +1,17 @@
 package gateway
 
 import (
-	"cynthia/ds/api"
+	"bytes"
+	"cynthia/ds/dsapi"
 	"cynthia/ds/dstypes"
 	"cynthia/ds/events"
 	"cynthia/ds/payloads"
 	"cynthia/util"
 	"encoding/json"
+	"fmt"
+	"io"
 	"log/slog"
+	"net/http"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -19,19 +23,62 @@ import (
 type DispatchHandler func(c *Client, p json.RawMessage)
 
 type Client struct {
+	token            string
+	appID            dstypes.Snowflake
 	mu               sync.RWMutex
 	dispatchHandlers map[events.EventName][]DispatchHandler
 	sequence         int
-	token            string
 	lastHeartbeat    atomic.Int64
 	latency          atomic.Int64
+	http             *http.Client
 }
 
-func NewClient() *Client {
+func NewClient(token string, appID dstypes.Snowflake) *Client {
 	return &Client{
+		token:            token,
+		appID:            appID,
 		dispatchHandlers: make(map[events.EventName][]DispatchHandler),
 		sequence:         0,
+		http:             &http.Client{},
 	}
+}
+
+func (c *Client) do(method, url string, body any) ([]byte, error) {
+	var buf io.Reader
+	if body != nil {
+		b, err := json.Marshal(body)
+		if err != nil {
+			return nil, err
+		}
+		buf = bytes.NewBuffer(b)
+	}
+
+	req, err := http.NewRequest(method, url, buf)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", "Bot "+c.token)
+	req.Header.Set("Content-Type", "application/json")
+
+	res, err := c.http.Do(req)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer res.Body.Close()
+
+	data, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if res.StatusCode < 200 || res.StatusCode >= 300 {
+		return nil, fmt.Errorf("discord API error %d: %s", res.StatusCode, string(data))
+	}
+
+	return data, nil
 }
 
 func (c *Client) addHandler(event events.EventName, handler DispatchHandler) {
@@ -61,8 +108,7 @@ func (c *Client) Emit(p payloads.GenericPayload) {
 	}
 }
 
-func (c *Client) Start(token string, intents dstypes.Intents) *error {
-	c.token = token
+func (c *Client) Start(intents dstypes.Intents) *error {
 	conn, _, err := websocket.DefaultDialer.Dial(GatewayURL, nil)
 
 	if err != nil {
@@ -107,7 +153,7 @@ func (c *Client) Start(token string, intents dstypes.Intents) *error {
 					})
 				}
 
-				Identify(conn, token, intents)
+				Identify(conn, c.token, intents)
 			}
 
 		case payloads.OpDispatch:
@@ -142,16 +188,21 @@ func (c *Client) Latency() time.Duration {
 }
 
 func (c *Client) SendMessage(channelID dstypes.Snowflake, content string) error {
-	return api.SendMessageContent(c.token, channelID, content)
+	return dsapi.SendMessageContent(c.token, channelID, content)
 }
 
 func (c *Client) SendEmbed(channelID dstypes.Snowflake, embed dstypes.Embed) error {
 	e := util.NewVector[dstypes.Embed]()
 	e.Push(embed)
 
-	return api.SendMessageEmbeds(c.token, channelID, e)
+	return dsapi.SendMessageEmbeds(c.token, channelID, e)
 }
 
 func (c *Client) SendEmbeds(channelID dstypes.Snowflake, embeds *util.Vector[dstypes.Embed]) error {
-	return api.SendMessageEmbeds(c.token, channelID, embeds)
+	return dsapi.SendMessageEmbeds(c.token, channelID, embeds)
+}
+
+func (c *Client) CreateGuildCommand(body dsapi.CreateGuildCommandBody, guildID dstypes.Snowflake) error {
+	_, err := c.do("POST", dsapi.EndpointRegisterGuildCommand(c.appID, guildID), body)
+	return err
 }

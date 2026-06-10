@@ -3,6 +3,7 @@ package main
 import (
 	"cynthia/bot/handlers"
 	"cynthia/ds"
+	"cynthia/ds/dsapi"
 	"cynthia/ds/dstypes"
 	"log/slog"
 	"os"
@@ -15,8 +16,9 @@ import (
 func registerEventHandlers(client *ds.Client) {
 	client.OnReady(handlers.OnReady)
 	client.OnMessageCreate(handlers.OnMessageCreate)
+	client.OnInteractionCreate(handlers.InteractionCreate)
 
-	slog.Info("Registered 2 event handlders.")
+	slog.Info("Registered 3 event handlders.")
 }
 
 func main() {
@@ -28,9 +30,19 @@ func main() {
 
 	godotenv.Load()
 
-	client := ds.NewClient()
+	client := ds.NewClient(os.Getenv("TOKEN"), os.Getenv("APP_ID"))
 
 	registerEventHandlers(client)
 
-	client.Start(os.Getenv("TOKEN"), dstypes.IntentsGuilds|dstypes.IntentsGuildMessages|dstypes.IntentsMessageContent)
+	err := client.CreateGuildCommand(dsapi.CreateGuildCommandBody{
+		Name:        "ping",
+		Description: "bruh",
+	}, os.Getenv("TEST_GUILD"))
+
+	if err != nil {
+		slog.Error("Failed to create guild command", "error", err)
+	}
+
+	client.Start(dstypes.IntentsGuilds | dstypes.IntentsGuildMessages | dstypes.IntentsMessageContent)
+
 }

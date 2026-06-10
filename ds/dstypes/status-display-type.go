@@ -1,5 +1,7 @@
 package dstypes
 
+import "cynthia/util"
+
 type StatusDisplayType int
 
 const (
@@ -7,3 +9,7 @@ const (
 	StatusDisplayTypeState   StatusDisplayType = 1
 	StatusDisplayTypeDetails StatusDisplayType = 2
 )
+
+func (t *StatusDisplayType) UnmarshalJSON(data []byte) error {
+	return util.UnmarshalNumeric(data, t)
+}

@@ -1,5 +1,7 @@
 package dstypes
 
+import "cynthia/util"
+
 type WebhookEventType string
 
 const (
@@ -16,3 +18,7 @@ const (
 	WebhookEventTypeGameDirectMessageUpdate WebhookEventType = "GAME_DIRECT_MESSAGE_UPDATE"
 	WebhookEventTypeGameDirectMessageDelete WebhookEventType = "GAME_DIRECT_MESSAGE_DELETE"
 )
+
+func (e *WebhookEventType) UnmarshalJSON(b []byte) error {
+	return util.UnmarshalString(b, e)
+}

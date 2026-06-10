@@ -1,10 +1,16 @@
 package dstypes
 
-type PollLayoutType = int
+import "cynthia/util"
+
+type PollLayoutType int
 
 const (
 	PollLayoutTypeDefault PollLayoutType = 1
 )
+
+func (l *PollLayoutType) UnmarshalJSON(data []byte) error {
+	return util.UnmarshalNumeric(data, l)
+}
 
 type Poll struct {
 	Question         PollMedia      `json:"question"`

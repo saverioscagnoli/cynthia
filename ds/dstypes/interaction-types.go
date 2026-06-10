@@ -1,11 +1,17 @@
 package dstypes
 
-type InteractionType string
+import "cynthia/util"
+
+type InteractionType int
 
 const (
-	InteractionTypePing                           InteractionType = "PING"
-	InteractionTypeApplicationCommand             InteractionType = "APPLICATION_COMMAND"
-	InteractionTypeMessageComponent               InteractionType = "MESSAGE_COMPONENT"
-	InteractionTypeApplicationCommandAutocomplete InteractionType = "APPLICATION_COMMAND_AUTOCOMPLETE"
-	InteractionTypeModalSubmit                    InteractionType = "MODAL_SUBMIT"
+	InteractionTypePing                           InteractionType = 1
+	InteractionTypeApplicationCommand             InteractionType = 2
+	InteractionTypeMessageComponent               InteractionType = 3
+	InteractionTypeApplicationCommandAutocomplete InteractionType = 4
+	InteractionTypeModalSubmit                    InteractionType = 5
 )
+
+func (i *InteractionType) UnmarshalJSON(data []byte) error {
+	return util.UnmarshalNumeric(data, i)
+}

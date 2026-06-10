@@ -1,5 +1,7 @@
 package dstypes
 
+import "cynthia/util"
+
 type ApplicationFlags int
 
 const (
@@ -14,3 +16,7 @@ const (
 	ApplicationFlagGatewayMessageContentLimited             ApplicationFlags = 1 << 19
 	ApplicationFlagApplicationCommandBadge                  ApplicationFlags = 1 << 23
 )
+
+func (a *ApplicationFlags) UnmarshalJSON(b []byte) error {
+	return util.UnmarshalNumeric(b, a)
+}

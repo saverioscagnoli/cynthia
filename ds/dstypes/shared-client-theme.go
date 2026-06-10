@@ -1,5 +1,7 @@
 package dstypes
 
+import "cynthia/util"
+
 type BaseThemeType int
 
 const (
@@ -9,6 +11,10 @@ const (
 	BaseThemeTypeDarker   BaseThemeType = 3
 	BaseThemeTypeMidnight BaseThemeType = 4
 )
+
+func (t *BaseThemeType) UnmarshalJSON(data []byte) error {
+	return util.UnmarshalNumeric(data, t)
+}
 
 type SharedClientTheme struct {
 	Colors        []string       `json:"colors"`

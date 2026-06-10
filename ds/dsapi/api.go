@@ -1,4 +1,4 @@
-package api
+package dsapi
 
 import (
 	"bytes"
@@ -10,7 +10,7 @@ import (
 	"net/http"
 )
 
-const apiLink = "https://discord.com/api"
+const ApiURL = "https://discord.com/api"
 
 func SendMessageContent(token string, channelID dstypes.Snowflake, content string) error {
 	url := EndpointCreateMessage(channelID)

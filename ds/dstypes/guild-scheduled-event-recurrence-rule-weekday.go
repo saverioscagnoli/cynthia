@@ -1,5 +1,7 @@
 package dstypes
 
+import "cynthia/util"
+
 type GuildScheduledEventRecurrenceRuleWeekday int
 
 const (
@@ -11,3 +13,7 @@ const (
 	GuildScheduledEventRecurrenceRuleWeekdaySaturday  GuildScheduledEventRecurrenceRuleWeekday = 5
 	GuildScheduledEventRecurrenceRuleWeekdaySunday    GuildScheduledEventRecurrenceRuleWeekday = 6
 )
+
+func (e *GuildScheduledEventRecurrenceRuleWeekday) UnmarshalJSON(b []byte) error {
+	return util.UnmarshalNumeric(b, e)
+}

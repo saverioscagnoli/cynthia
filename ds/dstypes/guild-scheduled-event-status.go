@@ -1,5 +1,7 @@
 package dstypes
 
+import "cynthia/util"
+
 type GuildScheduledEventStatus int
 
 const (
@@ -8,3 +10,7 @@ const (
 	GuildScheduledEventCompleted       GuildScheduledEventStatus = 3
 	GuildScheduledEventCanceled        GuildScheduledEventStatus = 4
 )
+
+func (e *GuildScheduledEventStatus) UnmarshalJSON(b []byte) error {
+	return util.UnmarshalNumeric(b, e)
+}

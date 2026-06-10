@@ -1,8 +1,14 @@
 package dstypes
 
-type ApplicationIntegrationTypes int
+import "cynthia/util"
+
+type ApplicationIntegrationType int
 
 const (
-	ApplicationIntegrationTypesGuildInstall ApplicationIntegrationTypes = 0
-	ApplicationIntegrationTypesUserInstall  ApplicationIntegrationTypes = 1
+	ApplicationIntegrationTypesGuildInstall ApplicationIntegrationType = 0
+	ApplicationIntegrationTypesUserInstall  ApplicationIntegrationType = 1
 )
+
+func (a *ApplicationIntegrationType) UnmarshalJSON(b []byte) error {
+	return util.UnmarshalNumeric(b, a)
+}

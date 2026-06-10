@@ -1,5 +1,7 @@
 package dstypes
 
+import "cynthia/util"
+
 type ChannelType int
 
 const (
@@ -17,3 +19,7 @@ const (
 	ChannelTypeGuildForum         = 15
 	ChannelTypeGuildMedia         = 16
 )
+
+func (c *ChannelType) UnmarshalJSON(b []byte) error {
+	return util.UnmarshalNumeric(b, c)
+}
