@@ -1,10 +1,12 @@
 package dstypes
 
+import "encoding/json"
+
 type Interaction struct {
 	ID                           Snowflake                          `json:"id"`
 	ApplicationID                Snowflake                          `json:"application_id"`
 	Type                         InteractionType                    `json:"type"`
-	Data                         *any                               `json:"data"`
+	Data                         *json.RawMessage                   `json:"data"`
 	Guild                        *Guild                             `json:"guild"`
 	GuildID                      *Snowflake                         `json:"guild_id"`
 	Channel                      *Channel                           `json:"channel"`
