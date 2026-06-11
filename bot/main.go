@@ -2,9 +2,10 @@ package main
 
 import (
 	"cynthia/bot/handlers"
+	messagecommands "cynthia/bot/message-commands"
 	"cynthia/ds"
-	"cynthia/ds/dsapi"
 	"cynthia/ds/dstypes"
+	"flag"
 	"log/slog"
 	"os"
 	"time"
@@ -21,43 +22,35 @@ func registerEventHandlers(client *ds.Client) {
 	slog.Info("Registered event handlders.", "count", 3)
 }
 
-func registerInteractionCommandHandlersGuild(client *ds.Client) {
-
-}
-
 func main() {
+	levelFlag := flag.String("level", "info", "log level (debug, info, warn, error)")
+	flag.Parse()
+
+	var logLevel slog.Level
+
+	if err := logLevel.UnmarshalText([]byte(*levelFlag)); err != nil {
+		logLevel = slog.LevelInfo
+	}
+
 	slog.SetDefault(slog.New(tint.NewHandler(os.Stderr, &tint.Options{
-		AddSource:  true,
-		Level:      slog.LevelInfo,
+		Level:      logLevel,
 		TimeFormat: time.Kitchen,
 	})))
 
 	godotenv.Load()
+	slog.Info(".env Loaded.")
 
 	client := ds.NewClient(os.Getenv("TOKEN"), os.Getenv("APP_ID"))
 
 	registerEventHandlers(client)
-	slog.Info("Registered interaction command handlers", "count", len(handlers.InteractionCommandHandlers))
 
-	client.Api.ClearGuildCommands(os.Getenv("TEST_GUILD"))
-
-	slog.Warn("Cleared all previous guild commands")
-
-	err := client.Api.BulkOverwriteGuildCommands(dstypes.Snowflake(os.Getenv("TEST_GUILD")), []dsapi.CreateGuildCommandBody{
-		{
-			Name:        "ping",
-			Description: "bruh",
-		},
-		{
-			Name:        "twoplustwo",
-			Description: "Four!",
-		},
-	})
+	count, err := messagecommands.RegisterAll(client)
 
 	if err != nil {
-		slog.Error("Failed to create guild command", "error", err)
+		slog.Error("Failed to register application commands.", "err", err)
+	} else {
+		slog.Info("Successfuly registered application commands.", "count", count)
 	}
 
 	client.Start(dstypes.IntentsGuilds | dstypes.IntentsGuildMessages | dstypes.IntentsMessageContent)
-
 }

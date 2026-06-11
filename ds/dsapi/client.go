@@ -26,7 +26,7 @@ func NewApiClient(token string, appID dstypes.Snowflake) *Client {
 	}
 }
 
-func (c *Client) Request(method, url string, body any) ([]byte, error) {
+func (c *Client) rawRequest(method, url string, body any) ([]byte, error) {
 	slog.Debug("Performing request", "method", method, "url", url, "body", body)
 	var buf io.Reader
 
@@ -67,4 +67,18 @@ func (c *Client) Request(method, url string, body any) ([]byte, error) {
 	}
 
 	return data, nil
+}
+
+func Request[T any](c *Client, method string, url string, body any) (T, error) {
+	var result T
+
+	res, err := c.rawRequest(method, url, body)
+
+	if err != nil {
+		return result, err
+	}
+
+	err = json.Unmarshal(res, &result)
+
+	return result, err
 }

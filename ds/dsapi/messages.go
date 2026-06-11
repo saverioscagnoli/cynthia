@@ -17,7 +17,7 @@ type CreateMessageBody struct {
 }
 
 func (c *Client) SendMessage(channelID dstypes.Snowflake, body CreateMessageBody) error {
-	_, err := c.Request("POST", EndpointCreateMessage(channelID), body)
+	_, err := Request[any](c, "POST", EndpointCreateMessage(channelID), body)
 	return err
 
 }

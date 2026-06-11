@@ -13,6 +13,10 @@ func NewVector[T any]() *Vector[T] {
 	}
 }
 
+func (v *Vector[T]) Arr() *[]T {
+	return &v.items
+}
+
 // Returns the length of the vector
 func (v *Vector[T]) Length() int {
 	return len(v.items)

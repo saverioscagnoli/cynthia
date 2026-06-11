@@ -21,6 +21,7 @@ type Client struct {
 	token            string
 	appID            dstypes.Snowflake
 	mu               sync.RWMutex
+	wmu              sync.Mutex
 	dispatchHandlers map[dsevents.EventName][]DispatchHandler
 	sequence         int
 	lastHeartbeat    atomic.Int64
@@ -36,6 +37,12 @@ func NewClient(token string, appID dstypes.Snowflake) *Client {
 		sequence:         0,
 		Api:              dsapi.NewApiClient(token, appID),
 	}
+}
+
+func (c *Client) writeJSON(conn *websocket.Conn, v any) error {
+	c.wmu.Lock()
+	defer c.wmu.Unlock()
+	return conn.WriteJSON(v)
 }
 
 func (c *Client) addHandler(event dsevents.EventName, handler DispatchHandler) {
@@ -105,12 +112,12 @@ func (c *Client) Start(intents dstypes.Intents) *error {
 				slog.Info("Hello payload received.", "hello", hello)
 
 				if hello.HeartbeatInterval > 0 {
-					go StartHeartbeat(conn, hello.HeartbeatInterval, &c.sequence, func() {
+					go c.StartHeartbeat(conn, hello.HeartbeatInterval, &c.sequence, func() {
 						c.lastHeartbeat.Store(time.Now().UnixNano())
 					})
 				}
 
-				Identify(conn, c.token, intents)
+				c.Identify(conn, c.token, intents)
 			}
 
 		case payloads.OpDispatch:

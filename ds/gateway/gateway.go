@@ -5,7 +5,6 @@ package gateway
 import (
 	"cynthia/ds/dstypes"
 	"cynthia/ds/payloads"
-	"encoding/json"
 	"log/slog"
 	"time"
 
@@ -14,7 +13,7 @@ import (
 
 const GatewayURL = "wss://gateway.discord.gg/"
 
-func StartHeartbeat(conn *websocket.Conn, intervalMs int, seq *int, onSend func()) {
+func (c *Client) StartHeartbeat(conn *websocket.Conn, intervalMs int, seq *int, onSend func()) {
 	send := func() {
 		onSend()
 
@@ -24,9 +23,7 @@ func StartHeartbeat(conn *websocket.Conn, intervalMs int, seq *int, onSend func(
 			seqVal = *seq
 		}
 
-		p, _ := json.Marshal(map[string]any{"op": payloads.OpHeartbeat, "d": seqVal})
-
-		if err := conn.WriteMessage(websocket.TextMessage, p); err != nil {
+		if err := c.writeJSON(conn, map[string]any{"op": payloads.OpHeartbeat, "d": seqVal}); err != nil {
 			slog.Error("Failed to send heartbeat payload", "err", err)
 			return
 		}
@@ -47,8 +44,8 @@ func StartHeartbeat(conn *websocket.Conn, intervalMs int, seq *int, onSend func(
 	}
 }
 
-func Identify(conn *websocket.Conn, token string, intents dstypes.Intents) {
-	p, _ := json.Marshal(map[string]any{
+func (c *Client) Identify(conn *websocket.Conn, token string, intents dstypes.Intents) {
+	if err := c.writeJSON(conn, map[string]any{
 		"op": payloads.OpIdentify,
 		"d": payloads.Identify{
 			Token:   "Bot " + token,
@@ -59,8 +56,10 @@ func Identify(conn *websocket.Conn, token string, intents dstypes.Intents) {
 				"device":  "cynthia",
 			},
 		},
-	})
+	}); err != nil {
+		slog.Error("Failed to identiy", "err", err)
+		return
+	}
 
-	conn.WriteMessage(websocket.TextMessage, p)
 	slog.Info("Identification sent.")
 }
