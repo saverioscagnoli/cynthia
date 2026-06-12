@@ -8,6 +8,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
+	"runtime"
 	"sync"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -25,15 +28,17 @@ type TypeList struct {
 }
 
 type Type struct {
-	ID   int
-	Name string
+	ID     int
+	Name   string
+	Sprite []byte
 }
 
 func createTypesTable(db *sql.DB) {
 	_, err := db.Exec(`
 	CREATE TABLE IF NOT EXISTS types (
-		id   INTEGER PRIMARY KEY,
-		name TEXT    NOT NULL
+		id     INTEGER PRIMARY KEY,
+		name   TEXT NOT NULL,
+		sprite BLOB
 	)`)
 	if err != nil {
 		log.Fatal(err)
@@ -52,13 +57,25 @@ func fetchType(url string) (Type, error) {
 		return Type{}, fmt.Errorf("decoding type: %w", err)
 	}
 
-	return Type{
+	t := Type{
 		ID:   int(raw["id"].(float64)),
 		Name: raw["name"].(string),
-	}, nil
+	}
+
+	_, filename, _, _ := runtime.Caller(0)
+	dir := filepath.Dir(filename)
+	sprite, err := os.ReadFile(filepath.Join(dir, "../sprites/types/", t.Name+".png"))
+
+	if err != nil {
+		log.Printf("no sprite for %s: %v", t.Name, err)
+	}
+	t.Sprite = sprite
+
+	return t, nil
 }
 
 func main() {
+	fmt.Printf("dfasdff")
 	db, err := sql.Open("sqlite3", "./pokemon.db?_busy_timeout=5000")
 	if err != nil {
 		log.Fatal(err)
@@ -81,6 +98,7 @@ func main() {
 		url = list.Next
 		fmt.Printf("Collected %d types so far...\n", len(allTypes))
 	}
+
 	fmt.Printf("Total: %d types to fetch\n", len(allTypes))
 
 	const workers = 10
@@ -115,9 +133,9 @@ func main() {
 
 	for typ := range results {
 		_, err := db.Exec(`
-			INSERT OR REPLACE INTO types (id, name)
-			VALUES (?, ?)`,
-			typ.ID, typ.Name,
+			INSERT OR REPLACE INTO types (id, name, sprite)
+			VALUES (?, ?, ?)`,
+			typ.ID, typ.Name, typ.Sprite,
 		)
 		if err != nil {
 			log.Println("Insert failed for", typ.Name, err)

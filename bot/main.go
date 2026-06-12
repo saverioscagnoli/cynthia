@@ -1,11 +1,11 @@
 package main
 
 import (
-	"cynthia/bot/handlers"
-	messagecommands "cynthia/bot/message-commands"
+	"cynthia/bot/commands"
 	"cynthia/ds"
-	"cynthia/ds/dstypes"
+	"encoding/json"
 	"flag"
+	"fmt"
 	"log/slog"
 	"os"
 	"time"
@@ -13,14 +13,6 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/lmittmann/tint"
 )
-
-func registerEventHandlers(client *ds.Client) {
-	client.OnReady(handlers.OnReady)
-	client.OnMessageCreate(handlers.OnMessageCreate)
-	client.OnInteractionCreate(handlers.InteractionCreate)
-
-	slog.Info("Registered event handlders.", "count", 3)
-}
 
 func main() {
 	levelFlag := flag.String("level", "info", "log level (debug, info, warn, error)")
@@ -38,19 +30,45 @@ func main() {
 	})))
 
 	godotenv.Load()
-	slog.Info(".env Loaded.")
 
-	client := ds.NewClient(os.Getenv("TOKEN"), os.Getenv("APP_ID"))
+	client := ds.NewClient(os.Getenv("TOKEN"), os.Getenv("APP_ID"), ds.WithIntents(ds.IntentGuilds|ds.IntentGuildMessages|ds.IntentMessageContent))
 
-	registerEventHandlers(client)
+	commands.Register(client)
 
-	count, err := messagecommands.RegisterAll(client)
+	ds.On(client, ds.EventReady, func(c *ds.Client, r ds.Ready) {
+		slog.Info("Ready event received.", "username", r.User.Username, "version", r.Version)
+	})
 
-	if err != nil {
-		slog.Error("Failed to register application commands.", "err", err)
-	} else {
-		slog.Info("Successfuly registered application commands.", "count", count)
-	}
+	ds.On(client, ds.EventMessageCreate, func(c *ds.Client, msg ds.MessageCreate) {
+		if msg.Content == "!ping" {
+			text := fmt.Sprintf("Pong! `%dms`", c.Latency().Milliseconds())
+			c.Api.SendMessageText(msg.ChannelID, text)
+		}
+	})
 
-	client.Start(dstypes.IntentsGuilds | dstypes.IntentsGuildMessages | dstypes.IntentsMessageContent)
+	ds.On(client, ds.EventInteractionCreate, func(c *ds.Client, i ds.InteractionCreate) {
+		if i.Type == ds.InteractionTypeApplicationCommand || i.Type == ds.InteractionTypeApplicationCommandAutocomplete {
+			if i.Data == nil {
+				slog.Warn("Received command interaction with nil data")
+				return
+			}
+
+			var data ds.ApplicationCommandData
+
+			err := json.Unmarshal(*i.Data, &data)
+
+			if err != nil {
+				slog.Error("Failed to unmarshal command interaction data", "err", err)
+				return
+			}
+
+			if cmd, ok := commands.Registry[data.Name]; ok {
+				cmd.Handler(c, i)
+			} else {
+				slog.Error("Couldnt find handler for interaction command", "name", data.Name)
+			}
+		}
+	})
+
+	client.Login()
 }
