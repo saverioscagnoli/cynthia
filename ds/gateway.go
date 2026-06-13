@@ -20,6 +20,7 @@ type Client struct {
 	handlers      map[string][]any
 	conn          *websocket.Conn
 	mu            sync.Mutex
+	collectors    *collectorRegistry
 	sequence      int
 	lastHeartbeat atomic.Int64
 	latency       atomic.Int64
@@ -43,12 +44,13 @@ func WithIntents(intents Intent) ClientOption {
 
 func NewClient(token string, appID Snowflake, options ...ClientOption) *Client {
 	c := &Client{
-		token:    token,
-		appID:    appID,
-		intents:  0,
-		handlers: make(map[string][]any),
-		logger:   slog.Default(),
-		Api:      *newApiClient(token, appID),
+		token:      token,
+		appID:      appID,
+		intents:    0,
+		handlers:   make(map[string][]any),
+		collectors: newCollectorRegistry(),
+		logger:     slog.Default(),
+		Api:        *newApiClient(token, appID),
 	}
 
 	for _, opt := range options {
@@ -58,6 +60,12 @@ func NewClient(token string, appID Snowflake, options ...ClientOption) *Client {
 	if c.intents == 0 {
 		c.logger.Warn("No intents set — the bot will receive no events. Use WithIntents() to configure them, e.g. WithIntents(ds.IntentGuilds | ds.IntentGuildMessages)")
 	}
+
+	On(c, EventInteractionCreate, func(client *Client, i *InteractionCreate) {
+		if i.Type == InteractionTypeMessageComponent && c.collectors.dispatch(c, i) {
+			return
+		}
+	})
 
 	return c
 }

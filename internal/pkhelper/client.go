@@ -1,27 +1,26 @@
-package pokemon
+package pkhelper
 
 import (
 	"bytes"
-	"cynthia/cmd/pkapi"
 	"encoding/json"
 	"fmt"
 	"net/http"
 )
-
-type PokemonSprite = pkapi.PokemonSprite
-type PokemonSprites = pkapi.PokemonSprites
-type Pokemon = pkapi.Pokemon
 
 type PokemonClient struct {
 	baseURL string
 	http    *http.Client
 }
 
-func NewClient(url string) *PokemonClient {
-	return &PokemonClient{baseURL: url}
+var client = newClient("http://localhost:9000")
+
+func newClient(url string) *PokemonClient {
+	return &PokemonClient{baseURL: url, http: &http.Client{}}
 }
 
-var DefaultClient = NewClient("localhost:9000")
+func SetDefaultClient(url string) {
+	client = newClient(url)
+}
 
 func (c *PokemonClient) request(method string, endpoint string, body any) (*http.Response, error) {
 	var req *http.Request

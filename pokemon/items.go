@@ -1,4 +1,4 @@
-package pkapi
+package pokemon
 
 type Item struct {
 	ID          int     `json:"id"`

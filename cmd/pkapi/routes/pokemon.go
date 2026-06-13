@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"cynthia/cmd/pkapi"
 	"cynthia/cmd/pkapi/store"
+	"cynthia/pokemon"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -62,7 +62,7 @@ func GetPokemonSprites(w http.ResponseWriter, r *http.Request) {
 // GET /sprites/pokemon/{id}/{typ}
 func GetPokemonSprite(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(r.PathValue("id"))
-	spriteType, ok := pkapi.ParseSprite(r.PathValue("type"))
+	spriteType, ok := pokemon.ParseSprite(r.PathValue("type"))
 
 	if !ok {
 		http.Error(w, "invalid sprite type", http.StatusBadRequest)

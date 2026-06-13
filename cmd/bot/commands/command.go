@@ -2,7 +2,6 @@ package commands
 
 import (
 	"cynthia/ds"
-	"cynthia/util"
 	"log/slog"
 	"os"
 )
@@ -10,15 +9,16 @@ import (
 type Command interface {
 	Name() string
 	Description() string
-	Handler(client *ds.Client, i ds.InteractionCreate)
+	Handler(client *ds.Client, i *ds.InteractionCreate)
 }
 
 type CommandOptions interface {
-	Options() []ds.ApplicationCommandOption
+	Options() *[]ds.ApplicationCommandOption
 }
 
 var Registry map[string]Command = map[string]Command{
 	"ping": Ping{},
+	"echo": Echo{},
 }
 
 func Register(client *ds.Client) {
@@ -31,7 +31,7 @@ func Register(client *ds.Client) {
 		}
 
 		if o, ok := cmd.(CommandOptions); ok {
-			body.Options = util.Ptr(o.Options())
+			body.Options = o.Options()
 		}
 
 		bodies = append(bodies, body)

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 )
 
@@ -50,6 +51,8 @@ func (c *ApiClient) request(method string, endpoint string, body any) (*http.Res
 	}
 
 	req.Header.Set("Authorization", "Bot "+c.botToken)
+
+	slog.Debug("Sending request", "method", method, "endpoint", endpoint, "body", body)
 
 	return c.http.Do(req)
 }

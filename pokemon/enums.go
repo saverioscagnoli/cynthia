@@ -1,4 +1,4 @@
-package pkapi
+package pokemon
 
 import "cynthia/util"
 

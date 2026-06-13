@@ -35,18 +35,18 @@ func main() {
 
 	commands.Register(client)
 
-	ds.On(client, ds.EventReady, func(c *ds.Client, r ds.Ready) {
+	ds.On(client, ds.EventReady, func(c *ds.Client, r *ds.Ready) {
 		slog.Info("Ready event received.", "username", r.User.Username, "version", r.Version)
 	})
 
-	ds.On(client, ds.EventMessageCreate, func(c *ds.Client, msg ds.MessageCreate) {
+	ds.On(client, ds.EventMessageCreate, func(c *ds.Client, msg *ds.MessageCreate) {
 		if msg.Content == "!ping" {
 			text := fmt.Sprintf("Pong! `%dms`", c.Latency().Milliseconds())
 			c.Api.SendMessageText(msg.ChannelID, text)
 		}
 	})
 
-	ds.On(client, ds.EventInteractionCreate, func(c *ds.Client, i ds.InteractionCreate) {
+	ds.On(client, ds.EventInteractionCreate, func(c *ds.Client, i *ds.InteractionCreate) {
 		if i.Type == ds.InteractionTypeApplicationCommand || i.Type == ds.InteractionTypeApplicationCommandAutocomplete {
 			if i.Data == nil {
 				slog.Warn("Received command interaction with nil data")
@@ -67,6 +67,9 @@ func main() {
 			} else {
 				slog.Error("Couldnt find handler for interaction command", "name", data.Name)
 			}
+		} else if i.Type == ds.InteractionTypeMessageComponent {
+			d, _ := i.MessageComponentData()
+			slog.Info("message component", "i", d)
 		}
 	})
 

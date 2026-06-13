@@ -1,21 +1,21 @@
 package store
 
 import (
-	"cynthia/cmd/pkapi"
+	"cynthia/pokemon"
 	"cynthia/util"
 	"database/sql"
 	"log/slog"
 )
 
 var (
-	Pokemons       map[int]*pkapi.Pokemon        = map[int]*pkapi.Pokemon{}
-	PokemonSprites map[int]*pkapi.PokemonSprites = map[int]*pkapi.PokemonSprites{}
-	Types          map[int]pkapi.Type            = map[int]pkapi.Type{}
-	TypeSprites    map[int]*[]byte               = map[int]*[]byte{}
-	Moves          map[int]pkapi.Move            = map[int]pkapi.Move{}
+	Pokemons       map[int]*pokemon.Pokemon        = map[int]*pokemon.Pokemon{}
+	PokemonSprites map[int]*pokemon.PokemonSprites = map[int]*pokemon.PokemonSprites{}
+	Types          map[int]*pokemon.Type           = map[int]*pokemon.Type{}
+	TypeSprites    map[int]*[]byte                 = map[int]*[]byte{}
+	Moves          map[int]*pokemon.Move           = map[int]*pokemon.Move{}
 
-	Items       map[int]pkapi.Item = map[int]pkapi.Item{}
-	ItemSprites map[int]*[]byte    = map[int]*[]byte{}
+	Items       map[int]pokemon.Item = map[int]pokemon.Item{}
+	ItemSprites map[int]*[]byte      = map[int]*[]byte{}
 )
 
 func Extract(path string) {
@@ -41,7 +41,7 @@ func loadTypes(db *sql.DB) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var t pkapi.Type
+		var t pokemon.Type
 		var sprite []byte
 
 		if err := rows.Scan(&t.ID, &t.Name, &sprite); err != nil {
@@ -49,7 +49,7 @@ func loadTypes(db *sql.DB) {
 			continue
 		}
 
-		Types[t.ID] = t
+		Types[t.ID] = &t
 
 		if sprite != nil {
 			TypeSprites[t.ID] = &sprite
@@ -70,7 +70,7 @@ func loadMoves(db *sql.DB) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var m pkapi.Move
+		var m pokemon.Move
 		var typeID int
 		var damageClass sql.NullString
 
@@ -86,12 +86,12 @@ func loadMoves(db *sql.DB) {
 		}
 
 		if damageClass.Valid {
-			dc := pkapi.MoveDamageClass(damageClass.String)
+			dc := pokemon.MoveDamageClass(damageClass.String)
 			m.DamageClass = &dc
 		}
 
-		m.Type = Types[typeID]
-		Moves[m.ID] = m
+		m.Type = *Types[typeID]
+		Moves[m.ID] = &m
 	}
 }
 
@@ -104,7 +104,7 @@ func loadItems(db *sql.DB) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var i pkapi.Item
+		var i pokemon.Item
 
 		if err := rows.Scan(&i.ID, &i.Name, &i.Cost, &i.FlingPower, &i.FlingEffect); err != nil {
 			slog.Error("Scan item", "err", err)
@@ -155,7 +155,7 @@ func loadPokemons(db *sql.DB) {
 	defer rows.Close()
 
 	for rows.Next() {
-		p := &pkapi.Pokemon{}
+		p := &pokemon.Pokemon{}
 		var color string
 
 		err := rows.Scan(
@@ -171,7 +171,7 @@ func loadPokemons(db *sql.DB) {
 			continue
 		}
 
-		p.Species.Color = pkapi.PokemonColor(color)
+		p.Species.Color = pokemon.PokemonColor(color)
 		Pokemons[p.ID] = p
 	}
 
@@ -208,7 +208,7 @@ func loadPokemonSprites(db *sql.DB) {
 			continue
 		}
 
-		PokemonSprites[id] = &pkapi.PokemonSprites{
+		PokemonSprites[id] = &pokemon.PokemonSprites{
 			Front:            util.Ptr(front),
 			FrontShiny:       util.Ptr(frontShiny),
 			Back:             util.Ptr(back),
@@ -240,7 +240,7 @@ func loadPokemonTypes(db *sql.DB) {
 		if !ok {
 			continue
 		}
-		p.Types = append(p.Types, Types[typeID])
+		p.Types = append(p.Types, *Types[typeID])
 	}
 }
 
@@ -270,9 +270,9 @@ func loadPokemonMoves(db *sql.DB) {
 
 		move := Moves[moveID]
 
-		pm := &pkapi.PokemonMove{
-			Move:        move,
-			LearnMethod: pkapi.MoveLearnMethod(learnMethod),
+		pm := &pokemon.PokemonMove{
+			Move:        *move,
+			LearnMethod: pokemon.MoveLearnMethod(learnMethod),
 		}
 
 		p.Moves = append(p.Moves, pm)
@@ -299,7 +299,7 @@ func loadPokemonItems(db *sql.DB) {
 			continue
 		}
 
-		p.Items = append(p.Items, &pkapi.HeldItem{
+		p.Items = append(p.Items, &pokemon.HeldItem{
 			Item:   Items[itemID],
 			Rarity: rarity,
 		})

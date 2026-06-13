@@ -2,6 +2,7 @@ package ds
 
 import (
 	"bytes"
+	"cynthia/util"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,6 +15,10 @@ func (r *routes) CreateMessage(channelID Snowflake) (string, string) {
 	return http.MethodPost, fmt.Sprintf("/channels/%s/messages", channelID)
 }
 
+func (r *routes) EditMessage(channelID Snowflake, messageID Snowflake) (string, string) {
+	return http.MethodPatch, fmt.Sprintf("/channels/%s/messages/%s", channelID, messageID)
+}
+
 type CreateMessageBody struct {
 	Content     string             `json:"content"`
 	Embeds      []*Embed           `json:"embeds"`
@@ -23,38 +28,60 @@ type CreateMessageBody struct {
 	Files       []*MessageFile     `json:"files"`
 }
 
-func (c *ApiClient) SendMessage(channelID Snowflake, msg *CreateMessageBody) error {
+func (b *CreateMessageBody) MarshalJSON() ([]byte, error) {
+	type Alias CreateMessageBody
+	components := make([]json.RawMessage, len(b.Components))
+
+	for i, c := range b.Components {
+		data, err := json.Marshal(c)
+		if err != nil {
+			return nil, err
+		}
+		components[i] = data
+	}
+
+	return json.Marshal(&struct {
+		*Alias
+		Components []json.RawMessage `json:"components"`
+	}{
+		Alias:      (*Alias)(b),
+		Components: components,
+	})
+}
+
+func (c *ApiClient) SendMessage(channelID Snowflake, msg *CreateMessageBody) (*Message, error) {
 	method, endpoint := Routes.CreateMessage(channelID)
 
 	if len(msg.Files) > 0 {
 		return c.sendMultipart(method, endpoint, msg)
 	}
 
-	return c.sendJSON(method, endpoint, msg)
+	res, err := c.request(method, endpoint, msg)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return util.Decode[Message](res)
 }
 
-func (c *ApiClient) sendJSON(method, endpoint string, msg *CreateMessageBody) error {
-	_, err := c.request(method, endpoint, msg)
-	return err
-}
-
-func (c *ApiClient) sendMultipart(method, endpoint string, msg *CreateMessageBody) error {
+func (c *ApiClient) sendMultipart(method, endpoint string, msg *CreateMessageBody) (*Message, error) {
 	buf := &bytes.Buffer{}
 	writer := multipart.NewWriter(buf)
 
-	// write payload_json
 	j, err := json.Marshal(msg)
+
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := writer.WriteField("payload_json", string(j)); err != nil {
-		return err
+		return nil, err
 	}
 
-	// write each file
 	for i, f := range msg.Files {
 		ct := f.ContentType
+
 		if ct == "" {
 			ct = "application/octet-stream"
 		}
@@ -65,11 +92,11 @@ func (c *ApiClient) sendMultipart(method, endpoint string, msg *CreateMessageBod
 		})
 
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if _, err := io.Copy(part, f.Reader); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
@@ -78,7 +105,7 @@ func (c *ApiClient) sendMultipart(method, endpoint string, msg *CreateMessageBod
 	req, err := http.NewRequest(method, ApiURL+endpoint, buf)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())
@@ -87,23 +114,38 @@ func (c *ApiClient) sendMultipart(method, endpoint string, msg *CreateMessageBod
 	res, err := c.http.Do(req)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	defer res.Body.Close()
-
-	if res.StatusCode >= 400 {
-		body, _ := io.ReadAll(res.Body)
-		return fmt.Errorf("discord error %d: %s", res.StatusCode, body)
-	}
-
-	return nil
+	return util.Decode[Message](res)
 }
 
-func (c *ApiClient) SendMessageText(channelID Snowflake, content string) error {
+func (c *ApiClient) SendMessageText(channelID Snowflake, content string) (*Message, error) {
 	return c.SendMessage(channelID, &CreateMessageBody{Content: content})
 }
 
-func (c *ApiClient) SendMessageEmbed(channelID Snowflake, embed *Embed) error {
+func (c *ApiClient) SendMessageEmbed(channelID Snowflake, embed *Embed) (*Message, error) {
 	return c.SendMessage(channelID, &CreateMessageBody{Embeds: []*Embed{embed}})
+}
+
+func (c *ApiClient) EditMessage(channelID Snowflake, messageID Snowflake, body *CreateMessageBody) (*Message, error) {
+	method, endpoint := Routes.EditMessage(channelID, messageID)
+
+	if len(body.Files) > 0 {
+		return c.sendMultipart(method, endpoint, body)
+	}
+
+	res, err := c.request(method, endpoint, body)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return util.Decode[Message](res)
+}
+
+func (c *ApiClient) EditMessageText(channelID Snowflake, messageID Snowflake, text string) (*Message, error) {
+	return c.EditMessage(channelID, messageID, &CreateMessageBody{
+		Content: text,
+	})
 }

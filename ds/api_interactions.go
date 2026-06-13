@@ -1,6 +1,7 @@
 package ds
 
 import (
+	"cynthia/util"
 	"fmt"
 	"net/http"
 )
@@ -45,4 +46,13 @@ func (c *ApiClient) InteractionFollowup(i *Interaction, data InteractionCallback
 
 func (c *ApiClient) InteractionFollowupText(i *Interaction, message string) error {
 	return c.InteractionFollowup(i, InteractionCallbackData{Content: message})
+}
+
+func (c *ApiClient) InteractionReplyEphemeral(i *Interaction, data *InteractionCallbackData) error {
+	data.Flags = util.Ptr(64)
+	return c.InteractionReply(i, data)
+}
+
+func (c *ApiClient) InteractionReplyTextEphemeral(i *Interaction, message string) error {
+	return c.InteractionReplyEphemeral(i, &InteractionCallbackData{Content: message})
 }

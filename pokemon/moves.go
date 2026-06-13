@@ -1,4 +1,4 @@
-package pkapi
+package pokemon
 
 type Move struct {
 	ID               int              `json:"id"`

@@ -1,19 +1,22 @@
 package ds
 
-import "cynthia/util"
+import (
+	"cynthia/util"
+	"encoding/json"
+)
 
 type MessageComponent interface {
-	Type() int
+	Type() ComponentType
 	ID() *int
 }
 
 type ComponentBase struct {
-	Ctype int  `json:"type"`
-	Id    *int `json:"id,omitempty"`
+	Ctype ComponentType `json:"type"`
+	Id    *int          `json:"id,omitempty"`
 }
 
-func (c *ComponentBase) Type() int { return c.Ctype }
-func (c *ComponentBase) ID() *int  { return c.Id }
+func (c *ComponentBase) Type() ComponentType { return c.Ctype }
+func (c *ComponentBase) ID() *int            { return c.Id }
 
 type ComponentType int
 
@@ -44,9 +47,285 @@ func (c *ComponentType) UnmarshalJSON(data []byte) error {
 	return util.UnmarshalNumeric(data, c)
 }
 
+func UnmarshalMessageComponent(data []byte) (MessageComponent, error) {
+	var base ComponentBase
+	if err := json.Unmarshal(data, &base); err != nil {
+		return nil, err
+	}
+
+	switch base.Ctype {
+	case ComponentTypeActionRow:
+		var c ActionRow
+		if err := json.Unmarshal(data, &c); err != nil {
+			return nil, err
+		}
+		return &c, nil
+	case ComponentTypeButton:
+		var c Button
+		if err := json.Unmarshal(data, &c); err != nil {
+			return nil, err
+		}
+		return &c, nil
+	case ComponentTypeStringSelect:
+		var c StringSelect
+		if err := json.Unmarshal(data, &c); err != nil {
+			return nil, err
+		}
+		return &c, nil
+	case ComponentTypeTextInput:
+		var c TextInput
+		if err := json.Unmarshal(data, &c); err != nil {
+			return nil, err
+		}
+		return &c, nil
+	case ComponentTypeUserSelect:
+		var c UserSelect
+		if err := json.Unmarshal(data, &c); err != nil {
+			return nil, err
+		}
+		return &c, nil
+	case ComponentTypeRoleSelect:
+		var c RoleSelect
+		if err := json.Unmarshal(data, &c); err != nil {
+			return nil, err
+		}
+		return &c, nil
+	case ComponentTypeMentionableSelect:
+		var c MentionableSelect
+		if err := json.Unmarshal(data, &c); err != nil {
+			return nil, err
+		}
+		return &c, nil
+	case ComponentTypeChannelSelect:
+		var c ChannelSelect
+		if err := json.Unmarshal(data, &c); err != nil {
+			return nil, err
+		}
+		return &c, nil
+	case ComponentTypeSection:
+		var c Section
+		if err := json.Unmarshal(data, &c); err != nil {
+			return nil, err
+		}
+		return &c, nil
+	case ComponentTypeTextDisplay:
+		var c TextDisplay
+		if err := json.Unmarshal(data, &c); err != nil {
+			return nil, err
+		}
+		return &c, nil
+	case ComponentTypeThumbnail:
+		var c Thumbnail
+		if err := json.Unmarshal(data, &c); err != nil {
+			return nil, err
+		}
+		return &c, nil
+	case ComponentTypeMediaGallery:
+		var c MediaGallery
+		if err := json.Unmarshal(data, &c); err != nil {
+			return nil, err
+		}
+		return &c, nil
+	case ComponentTypeFile:
+		var c File
+		if err := json.Unmarshal(data, &c); err != nil {
+			return nil, err
+		}
+		return &c, nil
+	case ComponentTypeSeparator:
+		var c Separator
+		if err := json.Unmarshal(data, &c); err != nil {
+			return nil, err
+		}
+		return &c, nil
+	case ComponentTypeContainer:
+		var c Container
+		if err := json.Unmarshal(data, &c); err != nil {
+			return nil, err
+		}
+		return &c, nil
+	case ComponentTypeLabel:
+		var c Label
+		if err := json.Unmarshal(data, &c); err != nil {
+			return nil, err
+		}
+		return &c, nil
+	case ComponentTypeFileUpload:
+		var c FileUpload
+		if err := json.Unmarshal(data, &c); err != nil {
+			return nil, err
+		}
+		return &c, nil
+	case ComponentTypeRadioGroup:
+		var c RadioGroup
+		if err := json.Unmarshal(data, &c); err != nil {
+			return nil, err
+		}
+		return &c, nil
+	case ComponentTypeCheckboxGroup:
+		var c CheckboxGroup
+		if err := json.Unmarshal(data, &c); err != nil {
+			return nil, err
+		}
+		return &c, nil
+	case ComponentTypeCheckbox:
+		var c Checkbox
+		if err := json.Unmarshal(data, &c); err != nil {
+			return nil, err
+		}
+		return &c, nil
+	default:
+		return &base, nil
+	}
+}
+
+func unmarshalComponents(raws []json.RawMessage) ([]MessageComponent, error) {
+	components := make([]MessageComponent, 0, len(raws))
+	for _, r := range raws {
+		c, err := UnmarshalMessageComponent(r)
+		if err != nil {
+			return nil, err
+		}
+		components = append(components, c)
+	}
+	return components, nil
+}
+
 type ActionRow struct {
 	ComponentBase
 	Components []MessageComponent `json:"components"`
+}
+
+func NewActionRow() *ActionRow {
+	return &ActionRow{ComponentBase: ComponentBase{Ctype: ComponentTypeActionRow}}
+}
+
+func (a *ActionRow) Add(c MessageComponent) {
+	a.Components = append(a.Components, c)
+}
+
+func (a *ActionRow) WithComponent(c MessageComponent) *ActionRow {
+	a.Add(c)
+	return a
+}
+
+func (a *ActionRow) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		ComponentBase
+		Components []json.RawMessage `json:"components"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	a.ComponentBase = raw.ComponentBase
+	var err error
+	a.Components, err = unmarshalComponents(raw.Components)
+	return err
+}
+
+func (a *ActionRow) MarshalJSON() ([]byte, error) {
+	components := make([]json.RawMessage, len(a.Components))
+	for i, c := range a.Components {
+		data, err := json.Marshal(c)
+		if err != nil {
+			return nil, err
+		}
+		components[i] = data
+	}
+	return json.Marshal(&struct {
+		Type       ComponentType     `json:"type"`
+		ID         *int              `json:"id,omitempty"`
+		Components []json.RawMessage `json:"components"`
+	}{
+		Type:       a.Ctype,
+		ID:         a.Id,
+		Components: components,
+	})
+}
+
+type Section struct {
+	ComponentBase
+	Components []MessageComponent `json:"components"`
+	Accessory  MessageComponent   `json:"accessory"`
+}
+
+func (s *Section) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		ComponentBase
+		Components []json.RawMessage `json:"components"`
+		Accessory  json.RawMessage   `json:"accessory"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	s.ComponentBase = raw.ComponentBase
+	var err error
+	s.Components, err = unmarshalComponents(raw.Components)
+	if err != nil {
+		return err
+	}
+	if raw.Accessory != nil {
+		s.Accessory, err = UnmarshalMessageComponent(raw.Accessory)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+type Container struct {
+	ComponentBase
+	Components  []MessageComponent `json:"components"`
+	AccentColor *int               `json:"accent_color"`
+	Spoiler     *bool              `json:"spoiler"`
+}
+
+func (c *Container) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		ComponentBase
+		Components  []json.RawMessage `json:"components"`
+		AccentColor *int              `json:"accent_color"`
+		Spoiler     *bool             `json:"spoiler"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	c.ComponentBase = raw.ComponentBase
+	c.AccentColor = raw.AccentColor
+	c.Spoiler = raw.Spoiler
+	var err error
+	c.Components, err = unmarshalComponents(raw.Components)
+	return err
+}
+
+type Label struct {
+	ComponentBase
+	LabelText   string           `json:"label"`
+	Description *string          `json:"description"`
+	Component   MessageComponent `json:"component"`
+}
+
+func (l *Label) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		ComponentBase
+		LabelText   string          `json:"label"`
+		Description *string         `json:"description"`
+		Component   json.RawMessage `json:"component"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	l.ComponentBase = raw.ComponentBase
+	l.LabelText = raw.LabelText
+	l.Description = raw.Description
+	if raw.Component != nil {
+		var err error
+		l.Component, err = UnmarshalMessageComponent(raw.Component)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 type ButtonStyle int
@@ -73,6 +352,48 @@ type Button struct {
 	SkuID    *Snowflake  `json:"sku_id"`
 	URL      *string     `json:"url"`
 	Disabled *bool       `json:"disabled"`
+}
+
+func NewButton() *Button {
+	return &Button{ComponentBase: ComponentBase{Ctype: ComponentTypeButton}}
+}
+
+func (b *Button) WithLabel(label string) *Button {
+	b.Label = &label
+	return b
+}
+
+func (b *Button) WithStyle(style ButtonStyle) *Button {
+	b.Style = style
+	return b
+}
+
+func (b *Button) WithEmoji(emoji *Emoji) *Button {
+	b.Emoji = emoji
+	return b
+}
+
+func (b *Button) WithCustomID(id string) *Button {
+	b.CustomID = &id
+	return b
+}
+
+func (b *Button) WithURL(url string) *Button {
+	b.URL = &url
+	return b
+}
+
+func (b *Button) WithDisabled(d bool) *Button {
+	b.Disabled = &d
+	return b
+}
+
+func (b *Button) Disable() {
+	b.Disabled = util.Ptr(true)
+}
+
+func (b *Button) Enable() {
+	b.Disabled = util.Ptr(false)
 }
 
 type SelectDefaultValue struct {
@@ -166,12 +487,6 @@ type ChannelSelect struct {
 	Disabled      *bool                 `json:"disabled"`
 }
 
-type Section struct {
-	ComponentBase
-	Components []MessageComponent
-	Accessory  MessageComponent
-}
-
 type TextDisplay struct {
 	ComponentBase
 	Content string `json:"content"`
@@ -192,7 +507,7 @@ type MediaGalleryItem struct {
 
 type MediaGallery struct {
 	ComponentBase
-	Items []MediaGalleryItem
+	Items []MediaGalleryItem `json:"items"`
 }
 
 type File struct {
@@ -207,20 +522,6 @@ type Separator struct {
 	ComponentBase
 	Divider *bool `json:"divider"`
 	Spacing *int  `json:"spacing"`
-}
-
-type Container struct {
-	ComponentBase
-	Components  []MessageComponent `json:"components"`
-	AccentColor *int               `json:"accent_color"`
-	Spoiler     *bool              `json:"spoiler"`
-}
-
-type Label struct {
-	ComponentBase
-	Label       string           `json:"label"`
-	Description *string          `json:"description"`
-	Component   MessageComponent `json:"component"`
 }
 
 type FileUpload struct {

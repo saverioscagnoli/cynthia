@@ -7,19 +7,19 @@ type Event[T any] struct {
 }
 
 var (
-	EventReady             = Event[Ready]{"READY"}
-	EventMessageCreate     = Event[MessageCreate]{"MESSAGE_CREATE"}
-	EventGuildCreate       = Event[GuildCreate]{"GUILD_CREATE"}
-	EventInteractionCreate = Event[InteractionCreate]{"INTERACTION_CREATE"}
+	EventReady             = Event[*Ready]{"READY"}
+	EventMessageCreate     = Event[*MessageCreate]{"MESSAGE_CREATE"}
+	EventGuildCreate       = Event[*GuildCreate]{"GUILD_CREATE"}
+	EventInteractionCreate = Event[*InteractionCreate]{"INTERACTION_CREATE"}
 )
 
 type eventDispatcher func(c *Client, eventName string, data json.RawMessage)
 
 var dispatchers = map[string]eventDispatcher{
-	"READY":              makeDispatcher[Ready](),
-	"MESSAGE_CREATE":     makeDispatcher[MessageCreate](),
-	"GUILD_CREATE":       makeDispatcher[GuildCreate](),
-	"INTERACTION_CREATE": makeDispatcher[InteractionCreate](),
+	"READY":              makeDispatcher[*Ready](),
+	"MESSAGE_CREATE":     makeDispatcher[*MessageCreate](),
+	"GUILD_CREATE":       makeDispatcher[*GuildCreate](),
+	"INTERACTION_CREATE": makeDispatcher[*InteractionCreate](),
 }
 
 func makeDispatcher[T any]() eventDispatcher {

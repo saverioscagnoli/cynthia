@@ -2,6 +2,7 @@ package ds
 
 import (
 	"cynthia/util"
+	"encoding/json"
 	"io"
 	"time"
 )
@@ -43,6 +44,34 @@ type Message struct {
 	Poll                 *Poll                       `json:"poll"`
 	Call                 *MessageCall                `json:"call"`
 	SharedClientTheme    *SharedClientTheme          `json:"shared_client_theme"`
+}
+
+func unmarshalComponentsPtr(raws []json.RawMessage) (*[]MessageComponent, error) {
+	components, err := unmarshalComponents(raws)
+	if err != nil {
+		return nil, err
+	}
+	return &components, nil
+}
+
+func (m *Message) UnmarshalJSON(data []byte) error {
+	type Alias Message
+	var raw struct {
+		Alias
+		Components []json.RawMessage `json:"components"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	*m = Message(raw.Alias)
+	if raw.Components != nil {
+		var err error
+		m.Components, err = unmarshalComponentsPtr(raw.Components)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 type MessageActivity struct {
