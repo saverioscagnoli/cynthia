@@ -62,8 +62,8 @@ func NewClient(token string, appID Snowflake, options ...ClientOption) *Client {
 	}
 
 	On(c, EventInteractionCreate, func(client *Client, i *InteractionCreate) {
-		if i.Type == InteractionTypeMessageComponent && c.collectors.dispatch(c, i) {
-			return
+		if i.Type == InteractionTypeMessageComponent {
+			c.collectors.dispatch(c, i)
 		}
 	})
 

@@ -38,6 +38,12 @@ func (c *ApiClient) InteractionDefer(i *Interaction) error {
 	})
 }
 
+func (c *ApiClient) InteractionDeferUpdate(i *InteractionCreate) error {
+	return c.InteractionCallback(i, InteractionResponse{
+		Type: InteractionCallbackTypeDeferredUpdateMessage,
+	})
+}
+
 func (c *ApiClient) InteractionFollowup(i *Interaction, data InteractionCallbackData) error {
 	method, endpoint := Routes.InteractionFollowup(c.appID, i.Token)
 	_, err := c.request(method, endpoint, data)

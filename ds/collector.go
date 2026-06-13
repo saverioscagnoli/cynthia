@@ -6,9 +6,12 @@ import (
 	"time"
 )
 
+const MaxCollectorTimeout = 15 * time.Minute
+
 type ComponentInteractionCollector struct {
 	messageID Snowflake
 	handler   func(*Client, *InteractionCreate)
+	onEnd     func()
 	count     atomic.Uint32
 	max       uint
 	done      chan struct{}
@@ -16,6 +19,10 @@ type ComponentInteractionCollector struct {
 }
 
 func (c *ComponentInteractionCollector) Stop() {
+	if c.onEnd != nil {
+		c.onEnd()
+	}
+
 	c.once.Do(func() { close(c.done) })
 }
 
@@ -56,39 +63,49 @@ func (r *collectorRegistry) dispatch(client *Client, i *InteractionCreate) bool 
 
 	c.handler(client, i)
 
-	if c.max > 0 {
-		if uint(c.count.Add(1)) >= c.max {
-			c.Stop()
-		}
+	if c.max > 0 && uint(c.count.Add(1)) >= c.max {
+		c.Stop()
 	}
 
 	return true
 }
 
+type CollectorOptions struct {
+	Timeout time.Duration
+	Max     uint
+	Handler func(*Client, *InteractionCreate)
+	OnEnd   func()
+}
+
 func (c *Client) CollectComponents(
 	messageID Snowflake,
-	timeout time.Duration,
-	max uint,
-	handler func(*Client, *InteractionCreate),
-	onExpire func(),
+	o CollectorOptions,
 ) *ComponentInteractionCollector {
 	col := &ComponentInteractionCollector{
 		messageID: messageID,
-		max:       max,
-		handler:   handler,
+		max:       o.Max,
+		handler:   o.Handler,
+		onEnd:     o.OnEnd,
 		done:      make(chan struct{}),
+	}
+
+	if o.Timeout <= 0 {
+		o.Timeout = 30 * time.Second
+	} else if o.Timeout > MaxCollectorTimeout {
+		c.logger.Warn("CollectComponents timeout exceeded maximum, clamping", "requested", o.Timeout, "max", MaxCollectorTimeout)
+		o.Timeout = MaxCollectorTimeout
+	}
+
+	if o.Handler == nil {
+		o.Handler = func(*Client, *InteractionCreate) {}
 	}
 
 	c.collectors.add(col)
 
 	go func() {
 		select {
-		case <-time.After(timeout):
+		case <-time.After(o.Timeout):
 			col.Stop()
-
-			if onExpire != nil {
-				onExpire()
-			}
 
 		case <-col.done:
 		}

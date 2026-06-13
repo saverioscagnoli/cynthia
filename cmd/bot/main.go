@@ -67,9 +67,6 @@ func main() {
 			} else {
 				slog.Error("Couldnt find handler for interaction command", "name", data.Name)
 			}
-		} else if i.Type == ds.InteractionTypeMessageComponent {
-			d, _ := i.MessageComponentData()
-			slog.Info("message component", "i", d)
 		}
 	})
 
