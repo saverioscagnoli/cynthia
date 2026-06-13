@@ -9,5 +9,3 @@ require (
 )
 
 require github.com/mattn/go-sqlite3 v1.14.45 // indirect
-
-replace github.com/JoshGuarino/PokeGo => github.com/saverioscagnoli/PokeGo v0.0.0-20260306183527-d73cede139f9

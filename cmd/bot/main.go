@@ -1,7 +1,7 @@
 package main
 
 import (
-	"cynthia/bot/commands"
+	"cynthia/cmd/bot/commands"
 	"cynthia/ds"
 	"encoding/json"
 	"flag"

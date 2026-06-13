@@ -2,8 +2,8 @@ package commands
 
 import (
 	"cynthia/ds"
+	"cynthia/internal/pokemon"
 	"fmt"
-	"net/http"
 )
 
 type Ping struct{}
@@ -22,19 +22,13 @@ func (p Ping) Handler(client *ds.Client, i ds.InteractionCreate) {
 	client.Api.InteractionDefer(&i)
 	client.Api.InteractionFollowupText(&i, msg)
 
-	resp, _ := http.Get("http://localhost:9000/pokemon/sprite/25/front")
-
-	defer resp.Body.Close()
+	pkmn, _ := pokemon.DefaultClient.GetPokemon(25)
 
 	embed := ds.NewEmbed().
+		WithTitle(pkmn.Name).
 		WithImage(&ds.EmbedImage{URL: "attachment://sprite.png"})
 
 	client.Api.SendMessage(*i.ChannelID, &ds.CreateMessageBody{
 		Embeds: []*ds.Embed{embed},
-		Files: []*ds.MessageFile{{
-			Name:        "sprite.png",
-			ContentType: "image/png",
-			Reader:      resp.Body,
-		}},
 	})
 }
