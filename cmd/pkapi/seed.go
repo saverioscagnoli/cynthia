@@ -10,6 +10,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -300,7 +301,13 @@ func createSchema(db *sql.DB) {
 			min_damage_taken        INTEGER,
 			PRIMARY KEY (species_id, evolves_to_species_id, trigger)
 		)`,
+		`CREATE TABLE IF NOT EXISTS trainer_sprites (
+           id     INTEGER PRIMARY KEY NOT NULL,
+           name   TEXT    NOT NULL,
+           sprite BLOB    NOT NULL
+        )`,
 	}
+
 	for _, s := range stmts {
 		if _, err := db.Exec(s); err != nil {
 			log.Fatalf("schema error: %v\nstatement: %s", err, s)
@@ -1189,6 +1196,39 @@ func seedEvolutionDetails(db *sql.DB) {
 	}
 }
 
+func seedTrainerSprites(db *sql.DB) {
+	log.Println("=== seeding trainer_sprites ===")
+	entries, err := assets.TrainerSprites.ReadDir("trainers")
+	if err != nil {
+		log.Fatal("read trainer sprites dir:", err)
+	}
+
+	i := 0
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+
+		name := entry.Name()
+		sprite, err := assets.TrainerSprites.ReadFile("trainers/" + name)
+		if err != nil {
+			log.Println("read sprite:", name, err)
+			continue
+		}
+
+		if _, err := db.Exec(
+			`INSERT OR REPLACE INTO trainer_sprites (id, name, sprite) VALUES (?, ?, ?)`,
+			i, strings.TrimSuffix(name, ".png"), sprite,
+		); err != nil {
+			log.Println("insert trainer sprite:", err)
+			continue
+		}
+
+		log.Println("wrote trainer sprite", i, name)
+		i++
+	}
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 func main() {
@@ -1223,6 +1263,7 @@ func main() {
 	seedPokemonMoves(db)
 	seedHeldItems(db)
 	seedEvolutionDetails(db)
+	seedTrainerSprites(db)
 
 	fmt.Println("All done.")
 }

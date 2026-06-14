@@ -67,6 +67,7 @@ func main() {
 	mux.HandleFunc("/sprites/pokemon/{id}/{type}", routes.GetPokemonSprite)
 	mux.HandleFunc("/sprites/item/{id}", routes.GetItemSprite)
 	mux.HandleFunc("/sprites/type/{id}", routes.GetTypeSprite)
+	mux.HandleFunc("/sprites/trainer/{id}", routes.GetTrainerSprite)
 
 	mux.HandleFunc("/stat/{id}", routes.GetStat)
 

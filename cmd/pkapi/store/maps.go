@@ -16,6 +16,7 @@ var (
 	Stats          map[int]*pokemon.Stat           = map[int]*pokemon.Stat{}
 	Items          map[int]pokemon.Item            = map[int]pokemon.Item{}
 	ItemSprites    map[int]*[]byte                 = map[int]*[]byte{}
+	TrainerSprites map[int]*[]byte                 = map[int]*[]byte{}
 )
 
 func Extract(path string) {
@@ -24,6 +25,7 @@ func Extract(path string) {
 		slog.Error("Failed to open database", "err", err)
 		return
 	}
+
 	defer db.Close()
 
 	loadStats(db)
@@ -31,6 +33,7 @@ func Extract(path string) {
 	loadMoves(db)
 	loadItems(db)
 	loadPokemons(db)
+	loadTrainerSprites(db)
 }
 
 func loadTypes(db *sql.DB) {
@@ -354,5 +357,28 @@ func loadPokemonStats(db *sql.DB) {
 			},
 			Value: baseStat,
 		})
+	}
+}
+
+func loadTrainerSprites(db *sql.DB) {
+	rows, err := db.Query(`SELECT id, sprite FROM trainer_sprites`)
+	if err != nil {
+		slog.Error("Failed to get trainer_sprites table", "err", err)
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var id int
+		var sprite []byte
+
+		if err := rows.Scan(&id, &sprite); err != nil {
+			slog.Error("Scan trainer sprite", "err", err)
+			continue
+		}
+
+		if sprite != nil {
+			TrainerSprites[id] = &sprite
+		}
 	}
 }

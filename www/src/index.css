@@ -1,5 +1,17 @@
+@import "tailwindcss";
+
+@import "@radix-ui/colors/slate.css";
+@import "@radix-ui/colors/slate-dark.css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
 * {
     padding: 0;
     margin: 0;
     box-sizing: border-box;
+}
+
+body {
+    background-color: var(--slate-1);
+    color: var(--slate-12);
 }
