@@ -74,9 +74,24 @@ type Pokemon struct {
 	Species     PokemonSpecies `json:"species"`
 	Moves       []*PokemonMove `json:"moves"`
 	Items       []*HeldItem    `json:"items"`
+	BaseStats   []*PokemonStat `json:"base_stats"`
 }
 
 type PokemonMove struct {
 	Move
 	LearnMethod MoveLearnMethod `json:"learn_method"`
+}
+
+type OwnedPokemon struct {
+	ID        int            `json:"id"`
+	Name      string         `json:"name"`
+	Level     int            `json:"level"`
+	Types     []Type         `json:"types"`
+	Exp       int            `json:"exp"`
+	Height    int            `json:"height"`
+	Weight    int            `json:"weight"`
+	SpeciesID int            `json:"species_id"`
+	Moves     []*Move        `json:"moves"` // Max 4
+	HeldItem  *Item          `json:"held_item"`
+	Stats     []*PokemonStat `json:"stats"`
 }

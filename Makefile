@@ -12,5 +12,8 @@ run-pkapi:
 	go build -o bin/pkapi ./cmd/pkapi/api.go
 	./bin/pkapi $(ARGS)
 
+run-seed:
+	go run ./cmd/pkapi/seed.go
+
 clean:
 	rm -rf bin/

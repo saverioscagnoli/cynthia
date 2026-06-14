@@ -1,68 +1,63 @@
 package main
 
 import (
-	"cynthia/cmd/bot/commands"
+	"context"
 	"cynthia/ds"
-	"encoding/json"
-	"flag"
 	"fmt"
 	"log/slog"
-	"os"
-	"time"
 
-	"github.com/joho/godotenv"
-	"github.com/lmittmann/tint"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+type DB struct {
+	*pgxpool.Pool
+	context.Context
+}
+
+type App struct {
+	*ds.Client
+	DB *DB
+}
+
 func main() {
-	levelFlag := flag.String("level", "info", "log level (debug, info, warn, error)")
-	flag.Parse()
+	app, err := Init()
 
-	var logLevel slog.Level
-
-	if err := logLevel.UnmarshalText([]byte(*levelFlag)); err != nil {
-		logLevel = slog.LevelInfo
+	if err != nil {
+		slog.Error("Initialization", "err", err)
 	}
 
-	slog.SetDefault(slog.New(tint.NewHandler(os.Stderr, &tint.Options{
-		Level:      logLevel,
-		TimeFormat: time.Kitchen,
-	})))
+	defer app.DB.Close()
 
-	godotenv.Load()
+	slog.Info("App initialized.")
 
-	client := ds.NewClient(os.Getenv("TOKEN"), os.Getenv("APP_ID"), ds.WithIntents(ds.IntentGuilds|ds.IntentGuildMessages|ds.IntentMessageContent))
+	RegisterCommands(app.Client, app.DB)
 
-	commands.Register(client)
-
-	ds.On(client, ds.EventReady, func(c *ds.Client, r *ds.Ready) {
+	ds.On(app.Client, ds.EventReady, func(c *ds.Client, r *ds.Ready) {
 		slog.Info("Ready event received.", "username", r.User.Username, "version", r.Version)
 	})
 
-	ds.On(client, ds.EventMessageCreate, func(c *ds.Client, msg *ds.MessageCreate) {
+	ds.On(app.Client, ds.EventMessageCreate, func(c *ds.Client, msg *ds.MessageCreate) {
 		if msg.Content == "!ping" {
 			text := fmt.Sprintf("Pong! `%dms`", c.Latency().Milliseconds())
 			c.Api.SendMessageText(msg.ChannelID, text)
 		}
 	})
 
-	ds.On(client, ds.EventInteractionCreate, func(c *ds.Client, i *ds.InteractionCreate) {
+	ds.On(app.Client, ds.EventInteractionCreate, func(c *ds.Client, i *ds.InteractionCreate) {
 		if i.Type == ds.InteractionTypeApplicationCommand || i.Type == ds.InteractionTypeApplicationCommandAutocomplete {
 			if i.Data == nil {
 				slog.Warn("Received command interaction with nil data")
 				return
 			}
 
-			var data ds.ApplicationCommandData
-
-			err := json.Unmarshal(*i.Data, &data)
+			data, err := i.ApplicationCommandData()
 
 			if err != nil {
 				slog.Error("Failed to unmarshal command interaction data", "err", err)
 				return
 			}
 
-			if cmd, ok := commands.Registry[data.Name]; ok {
+			if cmd, ok := CommandsRegistry[data.Name]; ok {
 				cmd.Handler(c, i)
 			} else {
 				slog.Error("Couldnt find handler for interaction command", "name", data.Name)
@@ -70,5 +65,9 @@ func main() {
 		}
 	})
 
-	client.Login()
+	err = app.Client.Login()
+
+	if err != nil {
+		slog.Error("Gateway", "err", err)
+	}
 }

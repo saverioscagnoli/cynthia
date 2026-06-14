@@ -26,6 +26,14 @@ const (
 	IntentAutoModerationExecution     Intent = 1 << 21
 	IntentGuildMessagePolls           Intent = 1 << 24
 	IntentDirectMessagePolls          Intent = 1 << 25
+
+	IntentAll Intent = IntentGuilds | IntentGuildMembers | IntentGuildModeration |
+		IntentGuildExpression | IntentGuildIntegrations | IntentGuildWebHooks |
+		IntentGuildInvites | IntentGuildVoiceStates | IntentGuildPresences |
+		IntentGuildMessages | IntentGuildMessageReactions | IntentGuildMessageTyping |
+		IntentDirectMessages | IntentDirectMessageReactions | IntentDirectMessageTyping |
+		IntentMessageContent | IntentGuildScheduledEvents | IntentAutoModerationConfiguration |
+		IntentAutoModerationExecution | IntentGuildMessagePolls | IntentDirectMessagePolls
 )
 
 func (i *Intent) UnmarshalJSON(b []byte) error {

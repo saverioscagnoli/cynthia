@@ -20,6 +20,7 @@ func GetItem(w http.ResponseWriter, r *http.Request) {
 
 	if !ok {
 		http.Error(w, "not found", http.StatusNotFound)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")

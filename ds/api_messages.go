@@ -19,7 +19,7 @@ func (r *routes) EditMessage(channelID Snowflake, messageID Snowflake) (string, 
 	return http.MethodPatch, fmt.Sprintf("/channels/%s/messages/%s", channelID, messageID)
 }
 
-type CreateMessageBody struct {
+type MessageBody struct {
 	Content     string             `json:"content"`
 	Embeds      []*Embed           `json:"embeds"`
 	TTS         *bool              `json:"tts"`
@@ -28,8 +28,8 @@ type CreateMessageBody struct {
 	Files       []*MessageFile     `json:"files"`
 }
 
-func (b *CreateMessageBody) MarshalJSON() ([]byte, error) {
-	type Alias CreateMessageBody
+func (b *MessageBody) MarshalJSON() ([]byte, error) {
+	type Alias MessageBody
 	components := make([]json.RawMessage, len(b.Components))
 
 	for i, c := range b.Components {
@@ -49,7 +49,7 @@ func (b *CreateMessageBody) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (c *ApiClient) SendMessage(channelID Snowflake, msg *CreateMessageBody) (*Message, error) {
+func (c *ApiClient) SendMessage(channelID Snowflake, msg *MessageBody) (*Message, error) {
 	method, endpoint := Routes.CreateMessage(channelID)
 
 	if len(msg.Files) > 0 {
@@ -65,7 +65,7 @@ func (c *ApiClient) SendMessage(channelID Snowflake, msg *CreateMessageBody) (*M
 	return util.Decode[Message](res)
 }
 
-func (c *ApiClient) sendMultipart(method, endpoint string, msg *CreateMessageBody) (*Message, error) {
+func (c *ApiClient) sendMultipart(method, endpoint string, msg *MessageBody) (*Message, error) {
 	buf := &bytes.Buffer{}
 	writer := multipart.NewWriter(buf)
 
@@ -121,14 +121,14 @@ func (c *ApiClient) sendMultipart(method, endpoint string, msg *CreateMessageBod
 }
 
 func (c *ApiClient) SendMessageText(channelID Snowflake, content string) (*Message, error) {
-	return c.SendMessage(channelID, &CreateMessageBody{Content: content})
+	return c.SendMessage(channelID, &MessageBody{Content: content})
 }
 
 func (c *ApiClient) SendMessageEmbed(channelID Snowflake, embed *Embed) (*Message, error) {
-	return c.SendMessage(channelID, &CreateMessageBody{Embeds: []*Embed{embed}})
+	return c.SendMessage(channelID, &MessageBody{Embeds: []*Embed{embed}})
 }
 
-func (c *ApiClient) EditMessage(channelID Snowflake, messageID Snowflake, body *CreateMessageBody) (*Message, error) {
+func (c *ApiClient) EditMessage(channelID Snowflake, messageID Snowflake, body *MessageBody) (*Message, error) {
 	method, endpoint := Routes.EditMessage(channelID, messageID)
 
 	if len(body.Files) > 0 {
@@ -145,7 +145,7 @@ func (c *ApiClient) EditMessage(channelID Snowflake, messageID Snowflake, body *
 }
 
 func (c *ApiClient) EditMessageText(channelID Snowflake, messageID Snowflake, text string) (*Message, error) {
-	return c.EditMessage(channelID, messageID, &CreateMessageBody{
+	return c.EditMessage(channelID, messageID, &MessageBody{
 		Content: text,
 	})
 }

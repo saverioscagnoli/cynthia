@@ -13,9 +13,9 @@ var (
 	Types          map[int]*pokemon.Type           = map[int]*pokemon.Type{}
 	TypeSprites    map[int]*[]byte                 = map[int]*[]byte{}
 	Moves          map[int]*pokemon.Move           = map[int]*pokemon.Move{}
-
-	Items       map[int]pokemon.Item = map[int]pokemon.Item{}
-	ItemSprites map[int]*[]byte      = map[int]*[]byte{}
+	Stats          map[int]*pokemon.Stat           = map[int]*pokemon.Stat{}
+	Items          map[int]pokemon.Item            = map[int]pokemon.Item{}
+	ItemSprites    map[int]*[]byte                 = map[int]*[]byte{}
 )
 
 func Extract(path string) {
@@ -26,6 +26,7 @@ func Extract(path string) {
 	}
 	defer db.Close()
 
+	loadStats(db)
 	loadTypes(db)
 	loadMoves(db)
 	loadItems(db)
@@ -117,6 +118,24 @@ func loadItems(db *sql.DB) {
 	loadItemSprites(db)
 }
 
+func loadStats(db *sql.DB) {
+	rows, err := db.Query(`SELECT id, name FROM stats`)
+	if err != nil {
+		slog.Error("Failed to get stats table", "err", err)
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var s pokemon.Stat
+		if err := rows.Scan(&s.ID, &s.Name); err != nil {
+			slog.Error("Scan stat", "err", err)
+			continue
+		}
+		Stats[s.ID] = &s
+	}
+}
+
 func loadItemSprites(db *sql.DB) {
 	rows, err := db.Query(`SELECT id, sprite FROM items`)
 	if err != nil {
@@ -179,6 +198,7 @@ func loadPokemons(db *sql.DB) {
 	loadPokemonTypes(db)
 	loadPokemonMoves(db)
 	loadPokemonItems(db)
+	loadPokemonStats(db)
 }
 
 func loadPokemonSprites(db *sql.DB) {
@@ -302,6 +322,37 @@ func loadPokemonItems(db *sql.DB) {
 		p.Items = append(p.Items, &pokemon.HeldItem{
 			Item:   Items[itemID],
 			Rarity: rarity,
+		})
+	}
+}
+
+func loadPokemonStats(db *sql.DB) {
+	rows, err := db.Query(`SELECT pokemon_id, stat_id, base_stat FROM pokemon_base_stats`)
+	if err != nil {
+		slog.Error("Failed to get pokemon_base_stats table", "err", err)
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var pokemonID, statID, baseStat int
+		if err := rows.Scan(&pokemonID, &statID, &baseStat); err != nil {
+			slog.Error("Scan pokemon stat", "err", err)
+			continue
+		}
+
+		p, ok := Pokemons[pokemonID]
+		if !ok {
+			continue
+		}
+
+		stat := Stats[statID]
+		p.BaseStats = append(p.BaseStats, &pokemon.PokemonStat{
+			Stat: pokemon.Stat{
+				ID:   stat.ID,
+				Name: stat.Name,
+			},
+			Value: baseStat,
 		})
 	}
 }

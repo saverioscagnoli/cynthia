@@ -50,7 +50,7 @@ func main() {
 
 	slog.SetDefault(slog.New(tint.NewHandler(os.Stderr, &tint.Options{
 		Level:      slog.LevelInfo,
-		TimeFormat: time.Kitchen,
+		TimeFormat: time.TimeOnly,
 	})))
 
 	slog.Info("Extracting data in-memory...")
@@ -67,6 +67,8 @@ func main() {
 	mux.HandleFunc("/sprites/pokemon/{id}/{type}", routes.GetPokemonSprite)
 	mux.HandleFunc("/sprites/item/{id}", routes.GetItemSprite)
 	mux.HandleFunc("/sprites/type/{id}", routes.GetTypeSprite)
+
+	mux.HandleFunc("/stat/{id}", routes.GetStat)
 
 	port := os.Getenv("PKAPI_PORT")
 	slog.Info("Listening on port " + port)
