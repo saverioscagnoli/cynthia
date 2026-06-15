@@ -66,6 +66,13 @@ func SetupDatabase(username string, passwd string, host string, port string) (*p
 
 func createBotSchema(ctx context.Context, pool *pgxpool.Pool) error {
 	stmts := []string{
+		`CREATE TABLE IF NOT EXISTS users (
+    		discord_id  TEXT      PRIMARY KEY NOT NULL,
+    		username    TEXT      NOT NULL,
+    		avatar      TEXT,
+    		trainer_id  INTEGER   DEFAULT 0,
+    		created_at  TIMESTAMP NOT NULL DEFAULT NOW()
+      	)`,
 		`CREATE TABLE IF NOT EXISTS trainers (
 			id         TEXT      PRIMARY KEY NOT NULL,
 			money      INTEGER   NOT NULL DEFAULT 0,

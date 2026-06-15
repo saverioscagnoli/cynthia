@@ -9,4 +9,11 @@ export default defineConfig({
     resolve: {
         tsconfigPaths: true,
     },
+    server: {
+        proxy: {
+            "/auth": "http://localhost:3247",
+            "/user": "http://localhost:3247",
+            "/sprites": "http://localhost:3247",
+        },
+    },
 });
