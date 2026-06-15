@@ -6,22 +6,26 @@ import (
 	"flag"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/lmittmann/tint"
+	"github.com/rs/cors"
 )
 
 func NewApp(
 	token string,
 	appID ds.Snowflake,
 	DB *DB,
+	mux *http.ServeMux,
 ) *App {
 	return &App{
 		Client: ds.NewClient(token, appID, ds.WithIntents(ds.IntentAll)),
 		DB:     DB,
+		mux:    mux,
 	}
 }
 
@@ -106,6 +110,22 @@ func createBotSchema(ctx context.Context, pool *pgxpool.Pool) error {
 	return nil
 }
 
+func SetupBackend(addr string, port string) *http.ServeMux {
+	mux := http.NewServeMux()
+
+	go func() {
+		c := cors.Default()
+		err := http.ListenAndServe(fmt.Sprintf("%s:%s", addr, port), c.Handler(mux))
+
+		if err != nil {
+			slog.Error("Backend server", "err", err)
+			return
+		}
+	}()
+
+	return mux
+}
+
 func Init() (*App, error) {
 	SetupLogging()
 	godotenv.Load()
@@ -133,8 +153,15 @@ func Init() (*App, error) {
 
 	slog.Info("Checked database schema")
 
+	backendAddr := os.Getenv("BACKEND_ADDR")
+	backendPort := os.Getenv("BACKEND_PORT")
+
+	mux := SetupBackend(backendAddr, backendPort)
+
+	slog.Info("Backend listening.", "addr", fmt.Sprintf("%s:%s", backendAddr, backendPort))
+
 	token := os.Getenv("TOKEN")
 	appID := os.Getenv("APP_ID")
 
-	return NewApp(token, appID, &DB{Pool: pool, Context: ctx}), nil
+	return NewApp(token, appID, &DB{Pool: pool, Context: ctx}, mux), nil
 }

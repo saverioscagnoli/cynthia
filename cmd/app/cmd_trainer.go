@@ -1,7 +1,7 @@
 package main
 
 import (
-	"cynthia/cmd/bot/models"
+	"cynthia/cmd/app/models"
 	"cynthia/ds"
 	"cynthia/util"
 	"fmt"

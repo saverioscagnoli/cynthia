@@ -1,8 +1,8 @@
-build-bot:
-	go build -o bin/cynthia ./cmd/bot
+build-app:
+	go build -o bin/cynthia ./cmd/app
 
-run-bot:
-	go build -o bin/cynthia ./cmd/bot
+run-app:
+	go build -o bin/cynthia ./cmd/app
 	./bin/cynthia $(ARGS)
 
 build-pkapi:
@@ -14,6 +14,9 @@ run-pkapi:
 
 run-seed:
 	go run ./cmd/pkapi/seed.go
+
+app-healthcheck:
+	go run ./cmd/healthcheck
 
 clean:
 	rm -rf bin/

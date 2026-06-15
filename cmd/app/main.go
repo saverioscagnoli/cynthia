@@ -5,6 +5,7 @@ import (
 	"cynthia/ds"
 	"fmt"
 	"log/slog"
+	"net/http"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -16,11 +17,14 @@ type DB struct {
 
 type App struct {
 	*ds.Client
-	DB *DB
+	DB  *DB
+	mux *http.ServeMux
 }
 
 func main() {
 	app, err := Init()
+
+	app.SetupMuxHandler()
 
 	if err != nil {
 		slog.Error("Initialization", "err", err)
