@@ -1,14 +1,15 @@
 import { createRoot } from "react-dom/client";
 import { App } from "./App.tsx";
+import { BrowserRouter } from "react-router";
+import { MantineProvider } from "@mantine/core";
 
 import "~/index.css";
-import { BrowserRouter } from "react-router";
-import { ThemeContextProvider } from "~/contexts/theme";
+import "@mantine/core/styles.css";
 
 createRoot(document.getElementById("root")!).render(
-    <ThemeContextProvider>
-        <BrowserRouter>
-            <App />
-        </BrowserRouter>
-    </ThemeContextProvider>,
+  <MantineProvider defaultColorScheme="dark">
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </MantineProvider>,
 );

@@ -25,3 +25,11 @@ func GetTrainerSprite(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "image/png")
 	w.Write(*sprite)
 }
+
+// GET /sprites/trainer/count
+func GetTrainerSpriteCount(w http.ResponseWriter, r *http.Request) {
+	count := len(store.TrainerSprites)
+
+	w.Header().Set("Content-Type", "text/plain")
+	w.Write([]byte(strconv.Itoa(count)))
+}

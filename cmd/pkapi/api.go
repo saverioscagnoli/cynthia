@@ -14,6 +14,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/lmittmann/tint"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/rs/cors"
 )
 
 type responseWriter struct {
@@ -71,8 +72,13 @@ func main() {
 
 	mux.HandleFunc("/stat/{id}", routes.GetStat)
 
+	mux.HandleFunc("/sprites/trainer/count", routes.GetTrainerSpriteCount)
+
 	port := os.Getenv("PKAPI_PORT")
 	slog.Info("Listening on port " + port)
 
-	http.ListenAndServe("0.0.0.0:"+port, logRequests(mux))
+	c := cors.Default()
+	handler := c.Handler(logRequests(mux))
+
+	http.ListenAndServe("0.0.0.0:"+port, handler)
 }
