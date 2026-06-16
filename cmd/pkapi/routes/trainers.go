@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"cynthia/assets"
 	"cynthia/cmd/pkapi/store"
 	"net/http"
 	"strconv"
@@ -24,6 +25,31 @@ func GetTrainerSprite(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "image/png")
 	w.Write(*sprite)
+}
+
+// GET /sprites/trainer/sheet/map
+func GetTrainerSheet(w http.ResponseWriter, r *http.Request) {
+	data, err := assets.TrainerSheet.ReadFile("trainer-sheet.png")
+
+	if err != nil {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "image/png")
+	w.Write(data)
+}
+
+// GET /sprites/trainer/sheet
+func GetTrainerSheetMap(w http.ResponseWriter, r *http.Request) {
+	data, err := assets.TrainerSheetJSON.ReadFile("trainer-sheet.json")
+	if err != nil {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(data)
 }
 
 // GET /sprites/trainer/count

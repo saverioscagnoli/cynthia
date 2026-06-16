@@ -60,19 +60,21 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/pokemon/{id}", routes.GetPokemon)
-	mux.HandleFunc("/item/{id}", routes.GetItem)
-	mux.HandleFunc("/type/{id}", routes.GetType)
+	mux.HandleFunc("GET /pokemon/{id}", routes.GetPokemon)
+	mux.HandleFunc("GET /item/{id}", routes.GetItem)
+	mux.HandleFunc("GET /type/{id}", routes.GetType)
 
-	mux.HandleFunc("/sprites/pokemon/{id}", routes.GetPokemonSprites)
-	mux.HandleFunc("/sprites/pokemon/{id}/{type}", routes.GetPokemonSprite)
-	mux.HandleFunc("/sprites/item/{id}", routes.GetItemSprite)
-	mux.HandleFunc("/sprites/type/{id}", routes.GetTypeSprite)
-	mux.HandleFunc("/sprites/trainer/{id}", routes.GetTrainerSprite)
+	mux.HandleFunc("GET /sprites/pokemon/{id}", routes.GetPokemonSprites)
+	mux.HandleFunc("GET /sprites/pokemon/{id}/{type}", routes.GetPokemonSprite)
+	mux.HandleFunc("GET /sprites/item/{id}", routes.GetItemSprite)
+	mux.HandleFunc("GET /sprites/type/{id}", routes.GetTypeSprite)
 
-	mux.HandleFunc("/stat/{id}", routes.GetStat)
+	mux.HandleFunc("GET /sprites/trainer/sheet", routes.GetTrainerSheet)
+	mux.HandleFunc("GET /sprites/trainer/sheet/map", routes.GetTrainerSheetMap)
+	mux.HandleFunc("GET /sprites/trainer/count", routes.GetTrainerSpriteCount)
+	mux.HandleFunc("GET /sprites/trainer/{id}", routes.GetTrainerSprite)
 
-	mux.HandleFunc("/sprites/trainer/count", routes.GetTrainerSpriteCount)
+	mux.HandleFunc("GET /stat/{id}", routes.GetStat)
 
 	port := os.Getenv("PKAPI_PORT")
 	slog.Info("Listening on port " + port)
