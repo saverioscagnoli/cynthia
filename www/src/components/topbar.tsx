@@ -6,7 +6,9 @@ import {
     useMantineColorScheme,
 } from "@mantine/core";
 import { MoonIcon, SunIcon } from "lucide-react";
+import { useRef } from "react";
 import { useAuth } from "~/contexts/auth";
+import { cn } from "~/lib/utils";
 
 const Topbar = () => {
     const { colorScheme, toggleColorScheme } = useMantineColorScheme();
@@ -17,8 +19,14 @@ const Topbar = () => {
         : null;
 
     return (
-        <div className="w-full h-16 sticky top-0 flex items-center justify-between px-8">
-            <span className="font-semibold text-lg">Cynthia</span>
+        <div className="w-full h-18 sticky top-0 flex items-center justify-between px-8">
+            <img
+                src="/cynthia-overworld.png"
+                width={64}
+                height={64}
+                className={cn("mb-3")}
+                style={{ imageRendering: "pixelated" }}
+            />
 
             <div className="flex items-center gap-3">
                 {user ? (
@@ -53,12 +61,16 @@ const Topbar = () => {
                 )}
 
                 <ActionIcon
-                    size="xl"
+                    size="lg"
                     variant="subtle"
                     color="grape"
                     onClick={toggleColorScheme}
                 >
-                    {colorScheme === "dark" ? <SunIcon /> : <MoonIcon />}
+                    {colorScheme === "dark" ? (
+                        <SunIcon size={18} />
+                    ) : (
+                        <MoonIcon size={18} />
+                    )}
                 </ActionIcon>
             </div>
         </div>

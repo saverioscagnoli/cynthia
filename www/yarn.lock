@@ -740,6 +740,18 @@
     "@typescript-eslint/types" "8.61.0"
     eslint-visitor-keys "^5.0.0"
 
+"@util-hooks/use-event@*":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@util-hooks/use-event/-/use-event-2.0.0.tgz#0f12c76a3094004a5119404d60fb9dff3350df6d"
+  integrity sha512-TzhPFh9KnfywGT3M9X7nLLbMHRNeb/ix5Ae9cKFP1xmIneRGkWC8P5XdcjqU06BFiOk2vQo6b4VmBdOk4LPUEw==
+
+"@util-hooks/use-hotkey@^3.0.1":
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/@util-hooks/use-hotkey/-/use-hotkey-3.0.1.tgz#6ddedde3c989bb1418a7ba87bbf0c8887c95e3f3"
+  integrity sha512-4avxVtbtNsjp1TSZLPzegiecV+H+WZYikb0OvEAC0XYvh2sJReg8NALmP3JXRygR4KjAt22JCtYJX+lOW1axvw==
+  dependencies:
+    "@util-hooks/use-event" "*"
+
 "@vitejs/plugin-react@^6.0.1":
   version "6.0.2"
   resolved "https://registry.yarnpkg.com/@vitejs/plugin-react/-/plugin-react-6.0.2.tgz#f70cb8ed0ce225dbc3055d78070f820d8aa35eda"
@@ -1461,6 +1473,11 @@ react-style-singleton@^2.2.2, react-style-singleton@^2.2.3:
     get-nonce "^1.0.0"
     tslib "^2.0.0"
 
+react-virtuoso@^4.18.7:
+  version "4.18.7"
+  resolved "https://registry.yarnpkg.com/react-virtuoso/-/react-virtuoso-4.18.7.tgz#e5b0497ac76526cd661d71cd11f86c398784b905"
+  integrity sha512-xNF5zDGEEIMB7cKwcen/pLig0YDf6OnfFrVgKFa7sHPf9fRem0CaLshyObbBcP88jzn0enavL39EgplgdyT21g==
+
 react@^19.2.6:
   version "19.2.7"
   resolved "https://registry.yarnpkg.com/react/-/react-19.2.7.tgz#1f47a1bfc06f8ec885752c6f4af14369a9f8260b"
@@ -1541,6 +1558,11 @@ tagged-tag@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/tagged-tag/-/tagged-tag-1.0.0.tgz#a0b5917c2864cba54841495abfa3f6b13edcf4d6"
   integrity sha512-yEFYrVhod+hdNyx7g5Bnkkb0G6si8HJurOoOEgC8B/O0uXLHlaey/65KRv6cuWBNhBgHKAROVpc7QyYqE5gFng==
+
+tailwind-merge@^3.6.0:
+  version "3.6.0"
+  resolved "https://registry.yarnpkg.com/tailwind-merge/-/tailwind-merge-3.6.0.tgz#88d83242d1dd7bc847223f73dcf210dd1f2ee11c"
+  integrity sha512-uxL7qAVQriqRQPAyK3pj66VqskWqoZ37PW94jwOTwNfq/z9oyu1V+eqrZqtR2+fCiXdYOZe/Modt8GtvqNzu+w==
 
 tailwindcss@4.3.1, tailwindcss@^4.3.1:
   version "4.3.1"

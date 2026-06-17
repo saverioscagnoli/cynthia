@@ -6,7 +6,7 @@ run-app:
 	./bin/cynthia $(ARGS)
 
 build-pkapi:
-	go build -0 bin/pkapi ./cmd/pkapi/api.go
+	go build -o bin/pkapi ./cmd/pkapi/api.go
 
 run-pkapi:
 	go build -o bin/pkapi ./cmd/pkapi/api.go
