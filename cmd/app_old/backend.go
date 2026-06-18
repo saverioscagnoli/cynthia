@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/rs/cors"
 )
 
 type Claims struct {
@@ -182,7 +183,7 @@ func (a *App) SetupMuxHandler() {
 
 		json.NewDecoder(r.Body).Decode(&body)
 
-		_, err := a.DB.Exec(a.DB.Context, `UPDATE users SET trainer_id = $1 WHERE discord_id = $2`, body.TrainerID, dsID)
+		_, err := a.DB.Exec(r.Context(), `UPDATE users SET trainer_id = $1 WHERE discord_id = $2`, body.TrainerID, dsID)
 
 		if err != nil {
 			http.Error(w, "db error", http.StatusInternalServerError)
@@ -192,5 +193,29 @@ func (a *App) SetupMuxHandler() {
 		w.WriteHeader(http.StatusNoContent)
 	})
 
-	a.mux.Handle("/user/", a.authMiddleware(protected))
+	protected.HandleFunc("GET /user/trainer/me", func(w http.ResponseWriter, r *http.Request) {
+		dsID := r.Header.Get("X-Discord-ID")
+
+		if dsID == "" {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		trainer, err := a.DB.GetTrainer(dsID)
+
+		if trainer == nil && err == nil {
+			http.Error(w, "not found", http.StatusNotFound)
+			return
+		}
+
+		if err != nil {
+			http.Error(w, "database error", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(trainer)
+	})
+	c := cors.Default()
+	a.mux.Handle("/user/", c.Handler(a.authMiddleware(protected)))
 }

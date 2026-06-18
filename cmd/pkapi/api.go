@@ -6,6 +6,7 @@ import (
 	"cynthia/cmd/pkapi/routes"
 	"cynthia/cmd/pkapi/store"
 	"flag"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -33,13 +34,8 @@ func logRequests(next http.Handler) http.Handler {
 		start := time.Now()
 		rw := &responseWriter{ResponseWriter: w}
 		next.ServeHTTP(rw, r)
-		slog.Info("request",
-			"method", r.Method,
-			"path", r.URL.Path,
-			"remote", r.RemoteAddr,
-			"duration", time.Since(start),
-			"size_kb", float64(rw.bytesWritten)/1024,
-		)
+
+		slog.Info(fmt.Sprintf("/%s %s %s", r.Method, r.URL.Path, time.Since(start)))
 	})
 }
 

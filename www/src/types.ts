@@ -1,11 +1,17 @@
 type TrainerSpriteMapEntry = {
-    x: number;
-    y: number;
-    w: number;
-    h: number;
-    name: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  name: string;
 };
 
-type TrainerSpriteSheet = { [r: string]: TrainerSpriteMapEntry };
+type TrainerSpriteSheetMap = { [r: string]: TrainerSpriteMapEntry };
 
-export type { TrainerSpriteSheet, TrainerSpriteMapEntry };
+type Trainer = {
+  id: string;
+  money: number;
+  sprite_id: number;
+};
+
+export type { TrainerSpriteSheetMap, TrainerSpriteMapEntry, Trainer };

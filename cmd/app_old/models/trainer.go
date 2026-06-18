@@ -13,10 +13,12 @@ import (
 )
 
 type Trainer struct {
-	ID       string
-	Money    int
-	Pokemons *[]*pokemon.OwnedPokemon
-	Bag      *[]*pokemon.Item
+	ID        ds.Snowflake             `json:"id"`
+	Money     int                      `json:"money"`
+	Pokemons  *[]*pokemon.OwnedPokemon `json:"pokemons"`
+	Bag       *[]*pokemon.Item         `json:"bag"`
+	SpriteID  int                      `json:"sprite_id"`
+	CreatedAt string                   `json:"created_at"`
 }
 
 func CreateTrainer(ctx context.Context, pool *pgxpool.Pool, id string) (*Trainer, error) {
