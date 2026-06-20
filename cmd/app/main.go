@@ -2,12 +2,16 @@ package main
 
 import (
 	"cynthia/ds"
+	"flag"
 	"fmt"
 	"log/slog"
 )
 
 func main() {
-	app, err := Init()
+	dbPath := flag.String("db-path", "assets/pokemon.db", "Database path from where to extract information")
+	flag.Parse()
+
+	app, err := Init(*dbPath)
 
 	if err != nil {
 		slog.Error("Failed to initialize app", "err", err)
@@ -27,6 +31,22 @@ func main() {
 			if err != nil {
 				slog.Error("Error in message create", "err", err)
 				return
+			}
+		}
+	})
+
+	ds.On(app.ds, ds.EventInteractionCreate, func(c *ds.Client, i *ds.InteractionCreate) {
+		if i.Type == ds.InteractionTypeApplicationCommand {
+			data, _ := i.ApplicationCommandData()
+
+			if cmd, ok := c.Commands[data.Name]; ok {
+				err := cmd.Handler(c, i)
+
+				if err != nil {
+					slog.Error("Error during command execution", "err", err)
+				}
+			} else {
+				slog.Error("Slash command not found", "cmd", data.Name)
 			}
 		}
 	})

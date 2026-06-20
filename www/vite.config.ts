@@ -5,15 +5,15 @@ import tailwind from "@tailwindcss/vite";
 
 // https://vite.dev/config/
 export default defineConfig({
-    plugins: [react(), babel({ presets: [reactCompilerPreset()] }), tailwind()],
-    resolve: {
-        tsconfigPaths: true,
+  plugins: [react(), babel({ presets: [reactCompilerPreset()] }), tailwind()],
+  resolve: {
+    tsconfigPaths: true,
+  },
+  server: {
+    proxy: {
+      "/auth": "http://localhost:3247",
+      "/user": "http://localhost:3247",
+      "/sprites": "http://localhost:3247",
     },
-    server: {
-        proxy: {
-            "/auth": "http://localhost:3247",
-            "/user": "http://localhost:3247",
-            "/sprites": "http://localhost:3247",
-        },
-    },
+  },
 });

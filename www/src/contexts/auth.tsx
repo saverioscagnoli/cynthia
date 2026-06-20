@@ -1,35 +1,49 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { getTrainerMe } from "~/lib/backend";
-import type { Trainer } from "~/types";
+import { getLoggedUser } from "~/lib/backend";
 
-interface User {
-  discordId: string;
+type BagItem = {
+  item_id: number;
+  name: string;
+  quantity: number;
+  cost: number;
+  fling_power?: number;
+  fling_effect?: string;
+};
+
+type User = {
+  id: string;
   username: string;
-  avatar: string;
-  trainerId: number;
-}
+  discord_username: string;
+  avatar_hash: string;
+  money: number;
+  sprite_id?: number;
+  bag: BagItem[];
+  banner?: Blob;
+  created_at: string;
+};
 
-interface AuthContext {
+type AuthContextT = {
   user: User | null;
-  trainer: Trainer | null;
   token: string | null;
   logout: () => void;
+  logged: boolean;
   authFetch: (input: string, init?: RequestInit) => Promise<Response>;
-}
+};
 
-const AuthContext = createContext<AuthContext | null>(null);
+const AuthContext = createContext<AuthContextT | null>(null);
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children
+}) => {
+  const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(
-    localStorage.getItem("token"),
+    localStorage.getItem("token")
   );
 
-  const [user, setUser] = useState<User | null>(null);
-  const [trainer, setTrainer] = useState<Trainer | null>(null);
-
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const t = params.get("token");
+    let params = new URLSearchParams(window.location.search);
+    let t = params.get("token");
+
     if (t) {
       localStorage.setItem("token", t);
       setToken(t);
@@ -37,59 +51,71 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, []);
 
-  // Make sure user fetch depends on token being set
+  const logout = () => {
+    localStorage.removeItem("token");
+    setToken(null);
+    setUser(null);
+  };
+
+  const fetchUser = async () => {
+    let res = await fetch("/user/me", {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (res.status === 401) {
+      logout();
+      return;
+    }
+
+    try {
+      let user = await getLoggedUser(token!);
+      setUser(user);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     if (!token) {
       setUser(null);
       return;
     }
 
-    fetch("/user/me", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => {
-        if (res.status === 401) {
-          logout();
-          return null;
-        }
-
-        return res.json();
-      })
-      .then(async (data) => {
-        if (data) {
-          setUser(data);
-          let t = getTrainerMe(data.id);
-          setTrainer;
-        }
-      });
+    fetchUser();
   }, [token]);
-
-  const logout = () => {
-    localStorage.removeItem("token");
-    setToken(null);
-    setUser(null);
-    setTrainer(null);
-  };
 
   const authFetch = (input: string, init?: RequestInit) => {
     return fetch(input, {
       ...init,
       headers: {
         ...init?.headers,
-        Authorization: `Bearer ${token}`,
-      },
+        Authorization: `Bearer ${token}`
+      }
     });
   };
 
   return (
-    <AuthContext.Provider value={{ user, trainer, token, logout, authFetch }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        logout,
+        logged: user !== null,
+        authFetch
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => {
+const useAuth = () => {
   const ctx = useContext(AuthContext);
+
   if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
+
   return ctx;
 };
+
+export { AuthContext, AuthProvider, useAuth };
+export type { User, AuthContextT };

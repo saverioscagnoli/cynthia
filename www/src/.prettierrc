@@ -1,0 +1,23 @@
+{
+  "arrowParens": "avoid",
+  "bracketSpacing": true,
+  "tabWidth": 2,
+  "trailingComma": "none",
+  "plugins": [
+    "@ianvs/prettier-plugin-sort-imports",
+    "prettier-plugin-tailwindcss"
+  ],
+  "importOrder": [
+    "^react$",
+    ".*react.*",
+    "<THIRD_PARTY_MODULES>",
+    "^~/features/(.*)$",
+    "^~/components/(.*)$",
+    "^~/lib/(.*)$",
+    "^~/contexts/(.*)$",
+    "^~/hooks/(.*)$",
+    "^~/public/(.*)$",
+    "^[./]"
+  ],
+  "importOrderSortSpecifiers": true
+}

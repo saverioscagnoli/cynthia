@@ -2,34 +2,37 @@ package main
 
 import (
 	"context"
+	"cynthia/ds"
+	"cynthia/pkapi"
+	"cynthia/store"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/lmittmann/tint"
+	"github.com/rs/cors"
 )
 
 func createSchema(ctx context.Context, pool *pgxpool.Pool) error {
 	stmts := []string{
 		`CREATE TABLE IF NOT EXISTS users (
-    		discord_id  TEXT      PRIMARY KEY NOT NULL,
-    		username    TEXT      NOT NULL,
-    		avatar      TEXT,
-    		trainer_id  INTEGER   DEFAULT 0,
-    		created_at  TIMESTAMP NOT NULL DEFAULT NOW()
-      	)`,
-		`CREATE TABLE IF NOT EXISTS trainers (
-			id         TEXT      PRIMARY KEY NOT NULL,
-			money      INTEGER   NOT NULL DEFAULT 0,
-			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-			trainer_sprite_id	   INTEGER
-		)`,
+            id               TEXT      PRIMARY KEY NOT NULL,
+            username         TEXT      NOT NULL,
+            discord_username TEXT      NOT NULL,
+            avatar_hash      TEXT,
+            money            INTEGER   NOT NULL DEFAULT 0,
+            sprite_id        INTEGER,
+            banner           BYTEA,
+            banner_type      TEXT,
+            created_at       TIMESTAMP NOT NULL DEFAULT NOW()
+        )`,
 		`CREATE TABLE IF NOT EXISTS owned_pokemons (
 			id           SERIAL    PRIMARY KEY,
-			trainer_id   TEXT      NOT NULL REFERENCES trainers(id),
+			user_id   TEXT      NOT NULL REFERENCES users(id),
 			pokemon_id   INTEGER   NOT NULL,
 			nickname     TEXT,
 			level        INTEGER   NOT NULL DEFAULT 1,
@@ -50,10 +53,10 @@ func createSchema(ctx context.Context, pool *pgxpool.Pool) error {
 			PRIMARY KEY (owned_pokemon_id, stat_id)
 		)`,
 		`CREATE TABLE IF NOT EXISTS bag (
-			trainer_id TEXT    NOT NULL REFERENCES trainers(id),
+			user_id TEXT    NOT NULL REFERENCES users(id),
 			item_id    INTEGER NOT NULL,
 			quantity   INTEGER NOT NULL DEFAULT 1 CHECK(quantity > 0),
-			PRIMARY KEY (trainer_id, item_id)
+			PRIMARY KEY (user_id, item_id)
 		)`,
 	}
 
@@ -76,6 +79,16 @@ func SetupLogging() {
 	slog.SetDefault(slog.New(tint.NewHandler(os.Stderr, &tint.Options{
 		Level:      level,
 		TimeFormat: time.TimeOnly,
+		AddSource:  true,
+		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+			if a.Key == slog.LevelKey {
+				if lvl, ok := a.Value.Any().(slog.Level); ok && lvl == slog.LevelDebug {
+					return tint.Attr(33, a)
+				}
+			}
+
+			return a
+		},
 	})))
 }
 
@@ -93,16 +106,81 @@ func SetupDatabase() (*pgxpool.Pool, error) {
 		return nil, err
 	}
 
+	err = createSchema(ctx, pool)
+
+	if err != nil {
+		return nil, err
+	}
+
+	slog.Debug("Database schema checked")
+
 	err = pool.Ping(ctx)
 
 	if err != nil {
 		return nil, err
 	}
 
+	slog.Debug("Database ping successful")
+
 	return pool, nil
 }
 
-func Init() (*App, error) {
+func SetupBackend(addr string, port string, pool *pgxpool.Pool) (*backend, error) {
+	frontendURL := os.Getenv("FRONTEND_URL")
+	jwtSecret := os.Getenv("JWT_SECRET")
+	oauth2ClientID := os.Getenv("OAUTH2_CLIENT_ID")
+	oauth2Secret := os.Getenv("OAUTH2_SECRET")
+	oauth2RedirectURI := os.Getenv("OAUTH2_REDIRECT_URI")
+
+	b := &backend{
+		db:                db{pool: pool},
+		frontendURL:       frontendURL,
+		jwtSecret:         jwtSecret,
+		oauth2ClientID:    oauth2ClientID,
+		oauth2Secret:      oauth2Secret,
+		oauth2RedirectURI: oauth2RedirectURI,
+	}
+
+	publicMux := http.NewServeMux()
+	protectedMux := http.NewServeMux()
+
+	publicMux.HandleFunc("GET /healthcheck", b.Healthcheck)
+	publicMux.HandleFunc("GET /auth/login", b.AuthLogin)
+	publicMux.HandleFunc("GET /auth/callback", b.AuthCallback)
+
+	publicMux.Handle("/user/", b.authMiddleware(protectedMux))
+
+	protectedMux.HandleFunc("GET /user/me", b.GetCurrentUser)
+	protectedMux.HandleFunc("GET /user/banner", b.GetBanner)
+	protectedMux.HandleFunc("PUT /user/banner", b.UpdateBanner)
+
+	go func() {
+		c := cors.Default()
+		addr = fmt.Sprintf("%s:%s", addr, port)
+		err := http.ListenAndServe(addr, c.Handler(publicMux))
+
+		if err != nil {
+			slog.Error("Backend serve error", "err", err)
+			return
+		}
+	}()
+
+	return b, nil
+}
+
+func SetupDiscordCommands(app *App, testGuild ds.Snowflake) (bool, error) {
+	app.ds.AddCommand(Ping{})
+
+	if testGuild != "" {
+		err := app.ds.RegisterGuildCommands(testGuild)
+		return false, err
+	}
+
+	err := app.ds.RegisteGlobalCommands()
+	return true, err
+}
+
+func Init(dbPath string) (*App, error) {
 	err := godotenv.Load()
 
 	SetupLogging()
@@ -113,6 +191,15 @@ func Init() (*App, error) {
 
 	slog.Debug("Secrets loaded")
 
+	slog.Debug("Extracting data...")
+	store.Extract(dbPath)
+	slog.Info("Pokemon store filled")
+
+	pkapiPort := os.Getenv("PKAPI_PORT")
+
+	slog.Debug("Starting store api...")
+	go pkapi.Start(pkapiPort)
+
 	pool, err := SetupDatabase()
 
 	if err != nil {
@@ -121,5 +208,29 @@ func Init() (*App, error) {
 
 	slog.Info("Connected to database.")
 
-	return NewApp(pool), nil
+	addr := os.Getenv("BACKEND_ADDR")
+	port := os.Getenv("BACKEND_PORT")
+
+	b, err := SetupBackend(addr, port, pool)
+
+	if err != nil {
+		return nil, err
+	}
+
+	app := NewApp(pool, b)
+
+	testGuild := os.Getenv("TEST_GUILD")
+	global, err := SetupDiscordCommands(app, testGuild)
+
+	if err != nil {
+		return app, err
+	}
+
+	if global {
+		slog.Info("Registered commands", "count", len(app.ds.Commands))
+	} else {
+		slog.Info("Registered guild commands", "count", len(app.ds.Commands), "guild", testGuild)
+	}
+
+	return app, nil
 }

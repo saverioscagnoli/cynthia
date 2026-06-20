@@ -1,53 +1,48 @@
-import React, {
-    createContext,
-    useContext,
-    useEffect,
-    useState,
-    type Dispatch,
-    type ReactNode,
-    type SetStateAction,
-} from "react";
+import type { Dispatch } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
-type Theme = "dark" | "light";
+type Theme = "auto" | "light" | "dark";
 
 type ThemeContextT = {
-    theme: Theme;
-    setTheme: Dispatch<SetStateAction<Theme>>;
-    toggleTheme: () => void;
+  theme: Theme;
+  setTheme: Dispatch<Theme>;
+  toggle: () => void;
 };
 
 const ThemeContext = createContext<ThemeContextT | null>(null);
 
-const ThemeContextProvider: React.FC<{ children: ReactNode }> = ({
-    children,
+const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
+  children
 }) => {
-    const [theme, setTheme] = useState<Theme>("dark");
+  const [theme, setTheme] = useState<Theme>("auto");
 
-    const toggleTheme = () => {
-        setTheme((t) => (t === "dark" ? "light" : "dark"));
-    };
-
-    useEffect(() => {
-        document.documentElement.classList.toggle("dark");
-    }, [theme]);
-
-    return (
-        <ThemeContext.Provider
-            children={children}
-            value={{ theme, setTheme, toggleTheme }}
-        />
-    );
-};
-
-const useTheme = (): ThemeContextT => {
-    let ctx = useContext(ThemeContext);
-
-    if (!ctx) {
-        throw new Error("useTheme must be used between a ThemeProvider.");
+  useEffect(() => {
+    if (
+      theme === "auto" &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches
+    ) {
+      document.documentElement.className = "dark";
+      setTheme("dark");
+    } else {
+      document.documentElement.className = theme;
     }
+  }, [theme]);
 
-    return ctx;
+  const toggleTheme = () => setTheme(t => (t === "dark" ? "light" : "dark"));
+
+  return (
+    <ThemeContext.Provider value={{ theme, setTheme, toggle: toggleTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
 };
 
-export { ThemeContextProvider, useTheme };
-export type { Theme, ThemeContextT };
+const useTheme = () => {
+  const ctx = useContext(ThemeContext);
+
+  if (!ctx) throw new Error("useTheme must be used inside ThemeProvider");
+
+  return ctx;
+};
+
+export { ThemeProvider, useTheme };

@@ -1,17 +1,33 @@
-import type { Trainer } from "~/types";
+import type { User } from "~/contexts/auth";
 
-const backend = "http://localhost:3247";
-
-const BackendEndpoints = {
-  GetTrainerMe: "/user/trainer/me",
-} as const;
-
-async function getTrainerMe(id: string): Promise<Trainer> {
-  let res = await fetch(backend + BackendEndpoints.GetTrainerMe, {
-    headers: { "X-Discord-ID": id },
+async function getLoggedUser(token: string): Promise<User> {
+  let res = await fetch("/user/me", {
+    headers: { Authorization: `Bearer ${token}` }
   });
 
-  return res.json();
+  if (res.status === 401) {
+    throw new Error("unauthorized");
+  }
+
+  return await res.json();
 }
 
-export { BackendEndpoints, getTrainerMe };
+async function uploadBanner(token: string, file: File): Promise<void> {
+  let formData = new FormData();
+
+  formData.append("banner", file);
+
+  let res = await fetch("/user/banner", {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`
+    },
+    body: formData
+  });
+
+  if (!res.ok) {
+    throw new Error(await res.text());
+  }
+}
+
+export { getLoggedUser, uploadBanner };
