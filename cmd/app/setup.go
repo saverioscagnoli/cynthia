@@ -4,6 +4,8 @@ import (
 	"context"
 	"cynthia/ds"
 	"cynthia/pkapi"
+	"cynthia/service/api"
+	"cynthia/service/database"
 	"cynthia/store"
 	"fmt"
 	"log/slog"
@@ -16,58 +18,6 @@ import (
 	"github.com/lmittmann/tint"
 	"github.com/rs/cors"
 )
-
-func createSchema(ctx context.Context, pool *pgxpool.Pool) error {
-	stmts := []string{
-		`CREATE TABLE IF NOT EXISTS users (
-            id               TEXT      PRIMARY KEY NOT NULL,
-            username         TEXT      NOT NULL,
-            discord_username TEXT      NOT NULL,
-            avatar_hash      TEXT,
-            money            INTEGER   NOT NULL DEFAULT 0,
-            sprite_id        INTEGER,
-            banner           BYTEA,
-            banner_type      TEXT,
-            created_at       TIMESTAMP NOT NULL DEFAULT NOW()
-        )`,
-		`CREATE TABLE IF NOT EXISTS owned_pokemons (
-			id           SERIAL    PRIMARY KEY,
-			user_id   TEXT      NOT NULL REFERENCES users(id),
-			pokemon_id   INTEGER   NOT NULL,
-			nickname     TEXT,
-			level        INTEGER   NOT NULL DEFAULT 1,
-			exp          INTEGER   NOT NULL DEFAULT 0,
-			held_item_id INTEGER,
-			created_at   TIMESTAMP NOT NULL DEFAULT NOW()
-		)`,
-		`CREATE TABLE IF NOT EXISTS owned_pokemon_moves (
-			owned_pokemon_id INTEGER NOT NULL REFERENCES owned_pokemons(id),
-			move_id          INTEGER NOT NULL,
-			slot             INTEGER NOT NULL CHECK(slot BETWEEN 1 AND 4),
-			PRIMARY KEY (owned_pokemon_id, slot)
-		)`,
-		`CREATE TABLE IF NOT EXISTS owned_pokemon_stats (
-			owned_pokemon_id INTEGER NOT NULL REFERENCES owned_pokemons(id),
-			stat_id          INTEGER NOT NULL,
-			value            INTEGER NOT NULL,
-			PRIMARY KEY (owned_pokemon_id, stat_id)
-		)`,
-		`CREATE TABLE IF NOT EXISTS bag (
-			user_id TEXT    NOT NULL REFERENCES users(id),
-			item_id    INTEGER NOT NULL,
-			quantity   INTEGER NOT NULL DEFAULT 1 CHECK(quantity > 0),
-			PRIMARY KEY (user_id, item_id)
-		)`,
-	}
-
-	for _, s := range stmts {
-		if _, err := pool.Exec(ctx, s); err != nil {
-			return fmt.Errorf("bot schema error: %w\nstatement: %s", err, s)
-		}
-	}
-
-	return nil
-}
 
 func SetupLogging() {
 	level := slog.LevelInfo
@@ -92,7 +42,7 @@ func SetupLogging() {
 	})))
 }
 
-func SetupDatabase() (*pgxpool.Pool, error) {
+func SetupDatabase() (database.AppDatabase, error) {
 	username := os.Getenv("DB_USERNAME")
 	passwd := os.Getenv("DB_PASSWD")
 	host := os.Getenv("DB_HOST")
@@ -106,15 +56,13 @@ func SetupDatabase() (*pgxpool.Pool, error) {
 		return nil, err
 	}
 
-	err = createSchema(ctx, pool)
+	db, err := database.New(pool)
 
 	if err != nil {
 		return nil, err
 	}
 
-	slog.Debug("Database schema checked")
-
-	err = pool.Ping(ctx)
+	err = db.Ping(ctx)
 
 	if err != nil {
 		return nil, err
@@ -122,54 +70,27 @@ func SetupDatabase() (*pgxpool.Pool, error) {
 
 	slog.Debug("Database ping successful")
 
-	return pool, nil
+	return db, nil
 }
 
-func SetupBackend(addr string, port string, pool *pgxpool.Pool) (*backend, error) {
-	frontendURL := os.Getenv("FRONTEND_URL")
-	jwtSecret := os.Getenv("JWT_SECRET")
-	oauth2ClientID := os.Getenv("OAUTH2_CLIENT_ID")
-	oauth2Secret := os.Getenv("OAUTH2_SECRET")
-	oauth2RedirectURI := os.Getenv("OAUTH2_REDIRECT_URI")
+func SetupBackend(addr string, port string, db database.AppDatabase) error {
+	api, err := api.New(api.Config{
+		Logger:   slog.Default(),
+		Database: db,
+	})
 
-	b := &backend{
-		db:                db{pool: pool},
-		frontendURL:       frontendURL,
-		jwtSecret:         jwtSecret,
-		oauth2ClientID:    oauth2ClientID,
-		oauth2Secret:      oauth2Secret,
-		oauth2RedirectURI: oauth2RedirectURI,
+	if err != nil {
+		return err
 	}
 
-	publicMux := http.NewServeMux()
-	protectedMux := http.NewServeMux()
-
-	publicMux.HandleFunc("GET /healthcheck", b.Healthcheck)
-	publicMux.HandleFunc("GET /auth/login", b.AuthLogin)
-	publicMux.HandleFunc("GET /auth/callback", b.AuthCallback)
-
-	publicMux.Handle("/user/", b.authMiddleware(protectedMux))
-
-	protectedMux.HandleFunc("GET /user/me", b.GetCurrentUser)
-	protectedMux.HandleFunc("GET /user/banner", b.GetBanner)
-	protectedMux.HandleFunc("PUT /user/banner", b.UpdateBanner)
-	protectedMux.HandleFunc("DELETE /user/banner", b.DeleteBanner)
-	protectedMux.HandleFunc("PUT /user/username", b.UpdateUsername)
-
-	protectedMux.HandleFunc("PUT /user/sprite-id", b.UpdateTrainerSpriteID)
+	router := api.Handler()
 
 	go func() {
 		c := cors.Default()
-		addr = fmt.Sprintf("%s:%s", addr, port)
-		err := http.ListenAndServe(addr, c.Handler(publicMux))
-
-		if err != nil {
-			slog.Error("Backend serve error", "err", err)
-			return
-		}
+		http.ListenAndServe(addr+":"+port, c.Handler(router))
 	}()
 
-	return b, nil
+	return nil
 }
 
 func SetupDiscordCommands(app *App, testGuild ds.Snowflake) (bool, error) {
@@ -204,7 +125,7 @@ func Init(dbPath string) (*App, error) {
 	slog.Debug("Starting store api...")
 	go pkapi.Start(pkapiPort)
 
-	pool, err := SetupDatabase()
+	db, err := SetupDatabase()
 
 	if err != nil {
 		return nil, err
@@ -215,13 +136,13 @@ func Init(dbPath string) (*App, error) {
 	addr := os.Getenv("BACKEND_ADDR")
 	port := os.Getenv("BACKEND_PORT")
 
-	b, err := SetupBackend(addr, port, pool)
+	err = SetupBackend(addr, port, db)
 
 	if err != nil {
 		return nil, err
 	}
 
-	app := NewApp(pool, b)
+	app := NewApp(db)
 
 	testGuild := os.Getenv("TEST_GUILD")
 	global, err := SetupDiscordCommands(app, testGuild)

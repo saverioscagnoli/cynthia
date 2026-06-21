@@ -1,7 +1,7 @@
 package store
 
 import (
-	"cynthia/util"
+	"cynthia/service/util"
 	"database/sql"
 	"log/slog"
 )

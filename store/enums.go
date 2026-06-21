@@ -1,6 +1,6 @@
 package store
 
-import "cynthia/util"
+import "cynthia/service/util"
 
 type PokemonColor string
 
