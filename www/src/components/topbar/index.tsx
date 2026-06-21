@@ -19,7 +19,7 @@ const Topbar = () => {
         "h-20 w-full",
         "flex items-center justify-between",
         "sm:px-[5%] md:px-[7%] lg:px-[10%] xl:px-[20%]",
-        "sticky top-0 left-0"
+        "sticky top-0 left-0 z-9998 backdrop-blur-md"
       )}
     >
       <img

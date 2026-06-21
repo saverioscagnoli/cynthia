@@ -106,6 +106,28 @@ func (db *db) GetUser(id ds.Snowflake, ctx context.Context) (*models.User, error
 	return &user, nil, true
 }
 
+func (db *db) UpdateUsername(userID ds.Snowflake, username string, ctx context.Context) error {
+	if len(username) < 3 || len(username) > 23 {
+		return errors.New("username must be between 3 and 23 characters")
+	}
+
+	_, err := db.pool.Exec(ctx,
+		`UPDATE users SET username = $1 WHERE id = $2`,
+		username, userID,
+	)
+
+	return err
+}
+
+func (db *db) UpdateSpriteID(userID ds.Snowflake, spriteID int, ctx context.Context) error {
+	_, err := db.pool.Exec(ctx,
+		`UPDATE users SET sprite_id = $1 WHERE id = $2`,
+		spriteID, userID,
+	)
+
+	return err
+}
+
 func (b *backend) GetBanner(w http.ResponseWriter, r *http.Request) {
 	id := r.Header.Get("X-Discord-ID")
 
@@ -125,7 +147,7 @@ func (b *backend) GetBanner(w http.ResponseWriter, r *http.Request) {
 	w.Write(banner)
 }
 
-func (db *db) UpdateBanner(userID ds.Snowflake, banner []byte, contentType string, ctx context.Context) error {
+func (db *db) UpdateBanner(userID ds.Snowflake, banner []byte, contentType *string, ctx context.Context) error {
 	_, err := db.pool.Exec(ctx,
 		`UPDATE users SET banner = $1, banner_type = $2 WHERE id = $3`,
 		banner, contentType, userID,

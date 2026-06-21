@@ -6,10 +6,12 @@ import (
 	"cynthia/assets"
 	"database/sql"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"sort"
 	"strings"
 	"sync"
 
@@ -1215,6 +1217,28 @@ func seedTrainerSprites(db *sql.DB) {
 	}
 
 	i := 0
+
+	sort.Slice(entries, func(i, j int) bool {
+		ni := strings.TrimSuffix(entries[i].Name(), ".png")
+		nj := strings.TrimSuffix(entries[j].Name(), ".png")
+
+		basei := strings.SplitN(ni, "-", 2)[0]
+		basej := strings.SplitN(nj, "-", 2)[0]
+
+		if basei != basej {
+			return basei < basej
+		}
+
+		hasi := strings.Contains(ni, "-")
+		hasj := strings.Contains(nj, "-")
+
+		if hasi != hasj {
+			return !hasi
+		}
+
+		return ni < nj
+	})
+
 	for _, entry := range entries {
 		if entry.IsDir() {
 			continue
@@ -1243,7 +1267,10 @@ func seedTrainerSprites(db *sql.DB) {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 func main() {
-	db, err := sql.Open("sqlite3", "./pokemon.db?_busy_timeout=5000")
+	path := flag.String("db path", "./assets/pokemon.db", "dp path")
+	flag.Parse()
+
+	db, err := sql.Open("sqlite3", *path+"?_busy_timeout=5000")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -1264,16 +1291,16 @@ func main() {
 	//   pokemons → (pokemon_base_stats, pokemon_types, pokemon_moves, held_items, evolution_details)
 	//   items → held_items
 	//   moves → (pokemon_moves, evolution_details)
-	seedTypes(db)
-	seedSpecies(db)
-	seedPokemons(db)
-	seedStats(db)
-	seedMoves(db)
-	seedItems(db)
-	seedPokemonTypes(db)
-	seedPokemonMoves(db)
-	seedHeldItems(db)
-	seedEvolutionDetails(db)
+	//seedTypes(db)
+	//seedSpecies(db)
+	//seedPokemons(db)
+	//seedStats(db)
+	//seedMoves(db)
+	//seedItems(db)
+	//seedPokemonTypes(db)
+	//seedPokemonMoves(db)
+	//seedHeldItems(db)
+	//seedEvolutionDetails(db)
 	seedTrainerSprites(db)
 
 	fmt.Println("All done.")

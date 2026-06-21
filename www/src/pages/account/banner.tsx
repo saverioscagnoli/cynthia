@@ -1,21 +1,27 @@
-import { useEffect, useState } from "react";
-import { Pencil1Icon } from "@radix-ui/react-icons";
+import { useEffect, useRef, useState } from "react";
+import { Cross1Icon, Pencil1Icon } from "@radix-ui/react-icons";
 import { Button } from "~/components/ui";
-import { uploadBanner } from "~/lib/backend";
+import { deleteBanner, uploadBanner } from "~/lib/backend";
 import { cn } from "~/lib/utils";
-import { useAuth, type User } from "~/contexts/auth";
+import { useAuth } from "~/contexts/auth";
+import { useProfileEdit } from "~/contexts/profile-edit";
 import { useTheme } from "~/contexts/theme";
 
 const UserBanner = () => {
   const { token } = useAuth();
   const { theme } = useTheme();
+  const { editing, stopEditing } = useProfileEdit();
   const [bannerURL, setBannerURL] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetch("/user/banner", {
       headers: { Authorization: `Bearer ${token}` }
     })
-      .then(res => res.blob())
+      .then(res => {
+        if (!res.ok) throw new Error("no banner");
+        return res.blob();
+      })
       .then(blob => setBannerURL(URL.createObjectURL(blob)))
       .catch(() => setBannerURL(null));
   }, []);
@@ -26,41 +32,70 @@ const UserBanner = () => {
     };
   }, [bannerURL]);
 
+  const onEditClick = () => {
+    fileInputRef.current?.click();
+  };
+
   const onBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
 
     if (!file || !token) return;
 
+    const localURL = URL.createObjectURL(file);
+    setBannerURL(localURL);
+    stopEditing();
     uploadBanner(token, file);
   };
 
+  const onBannerDelete = async () => {
+    try {
+      await deleteBanner(token);
+    } catch (e) {
+      console.error(e);
+      return;
+    }
+
+    setBannerURL(null);
+    stopEditing();
+  };
+
   return (
-    <div className={cn("absolute inset-0", "group")}>
+    <div className={cn("absolute inset-0")}>
       <img
         className={cn("h-full w-full", "object-cover", "rounded-2xl")}
         src={
           bannerURL ?? (theme === "dark" ? "/pattern-dark.svg" : "/pattern.svg")
         }
       />
-      <label className="absolute top-4 right-4 cursor-pointer">
-        <input
-          type="file"
-          className="hidden"
-          accept="image/*"
-          onChange={onBannerChange}
-        />
-        <Button
-          className={cn(
-            "opacity-0 transition-opacity duration-200 group-hover:opacity-100",
-            "pointer-events-none"
-          )}
-          size="icon"
-          variant="ghost"
-          colorScheme="gray"
-        >
-          <Pencil1Icon />
-        </Button>
-      </label>
+      {editing && (
+        <>
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            accept="image/*"
+            onChange={onBannerChange}
+          />
+          <Button
+            className="absolute top-4 right-4"
+            size="icon"
+            variant="soft"
+            colorScheme="red"
+            onClick={onEditClick}
+          >
+            <Pencil1Icon />
+          </Button>
+          <Button
+            className={cn("absolute top-16 right-4")}
+            size="icon"
+            variant="soft"
+            colorScheme="red"
+            onClick={onBannerDelete}
+          >
+            <Cross1Icon />
+          </Button>
+        </>
+      )}
     </div>
   );
 };

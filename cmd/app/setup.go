@@ -153,6 +153,10 @@ func SetupBackend(addr string, port string, pool *pgxpool.Pool) (*backend, error
 	protectedMux.HandleFunc("GET /user/me", b.GetCurrentUser)
 	protectedMux.HandleFunc("GET /user/banner", b.GetBanner)
 	protectedMux.HandleFunc("PUT /user/banner", b.UpdateBanner)
+	protectedMux.HandleFunc("DELETE /user/banner", b.DeleteBanner)
+	protectedMux.HandleFunc("PUT /user/username", b.UpdateUsername)
+
+	protectedMux.HandleFunc("PUT /user/sprite-id", b.UpdateTrainerSpriteID)
 
 	go func() {
 		c := cors.Default()

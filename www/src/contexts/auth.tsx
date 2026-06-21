@@ -28,6 +28,7 @@ type AuthContextT = {
   logout: () => void;
   logged: boolean;
   authFetch: (input: string, init?: RequestInit) => Promise<Response>;
+  updateUser: (u: Partial<User>) => void;
 };
 
 const AuthContext = createContext<AuthContextT | null>(null);
@@ -94,6 +95,10 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     });
   };
 
+  const updateUser = (u: Partial<User>) => {
+    setUser(prev => (prev ? { ...prev, ...u } : null));
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -101,7 +106,8 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         token,
         logout,
         logged: user !== null,
-        authFetch
+        authFetch,
+        updateUser
       }}
     >
       {children}

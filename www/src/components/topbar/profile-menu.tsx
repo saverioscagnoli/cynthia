@@ -1,4 +1,4 @@
-import { LuLogOut, LuUser } from "react-icons/lu";
+import { LuHouse, LuLogOut, LuUser } from "react-icons/lu";
 import { useNavigate } from "react-router";
 import { DropdownMenu } from "~/components/ui";
 import { cn } from "~/lib/utils";
@@ -20,7 +20,14 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({ children }) => {
   return (
     <DropdownMenu colorScheme="gray">
       <DropdownMenu.Trigger>{children}</DropdownMenu.Trigger>
-      <DropdownMenu.Content className={cn("w-44", "mt-2")}>
+      <DropdownMenu.Content
+        className={cn("w-44", "mt-2", "z-9999")}
+        onCloseAutoFocus={e => e.preventDefault()}
+      >
+        <DropdownMenu.Item leftIcon={<LuHouse />} onClick={() => nav("/")}>
+          Home
+        </DropdownMenu.Item>
+        <DropdownMenu.Separator />
         <DropdownMenu.Label>Profile</DropdownMenu.Label>
         <DropdownMenu.Item
           leftIcon={<LuUser />}
@@ -28,7 +35,6 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({ children }) => {
         >
           Account
         </DropdownMenu.Item>
-        <DropdownMenu.Separator />
         <DropdownMenu.Item
           colorScheme="red"
           leftIcon={<LuLogOut />}
