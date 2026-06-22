@@ -29,6 +29,7 @@ func (rt *_router) wrap(fn HttpRouterHandler) func(http.ResponseWriter, *http.Re
 		}
 
 		ctx.Logger = rt.logger.With("reqUUID", reqUUID, "remote", r.RemoteAddr)
+		ctx.Logger.Info("Request", "method", r.Method, "path", r.URL.Path)
 
 		fn(w, r, ctx)
 	}

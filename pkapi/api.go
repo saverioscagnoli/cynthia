@@ -1,6 +1,7 @@
 package pkapi
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -31,7 +32,7 @@ func logRequests(next http.Handler) http.Handler {
 	})
 }
 
-func Start(port string) {
+func Start(ctx context.Context, port string) error {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /pokemon/{id}", GetPokemon)
@@ -50,10 +51,22 @@ func Start(port string) {
 
 	mux.HandleFunc("GET /stat/{id}", GetStat)
 
-	slog.Info("Listening on port " + port)
+	server := &http.Server{
+		Addr:    ":" + port,
+		Handler: cors.Default().Handler(logRequests(mux)),
+	}
 
-	c := cors.Default()
-	handler := c.Handler(logRequests(mux))
+	go func() {
+		<-ctx.Done()
+		slog.Warn("Pkapi shut down")
+		server.Shutdown(context.Background())
+	}()
 
-	http.ListenAndServe(":"+port, handler)
+	slog.Info("Store API started", "port", port)
+
+	if err := server.ListenAndServe(); err != http.ErrServerClosed {
+		return err
+	}
+
+	return nil
 }

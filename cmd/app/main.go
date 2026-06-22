@@ -5,6 +5,9 @@ import (
 	"flag"
 	"fmt"
 	"log/slog"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
@@ -51,5 +54,17 @@ func main() {
 		}
 	})
 
-	app.ds.Login()
+	go app.ds.Login()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	slog.Warn("Shutting down")
+
+	app.pkapiStop()
+
+	if err := app.rt.Close(); err != nil {
+		slog.Error("Error closing router", "err", err)
+	}
 }

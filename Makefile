@@ -1,15 +1,15 @@
 build-app:
-	go build -o bin/cynthia ./cmd/app
+	go build -mod=vendor -o bin/cynthia ./cmd/app
 
 run-app:
-	go build -o bin/cynthia ./cmd/app
+	go build -mod=vendor -o bin/cynthia ./cmd/app
 	./bin/cynthia $(ARGS)
 
 run-seed:
-	go run ./store/seed.go
+	go run -mod=vendor ./store/seed.go
 
 app-healthcheck:
-	go run ./cmd/healthcheck
+	go run -mod=vendor ./cmd/healthcheck
 
 db-up:
 	docker compose -f db-compose.yaml up -d

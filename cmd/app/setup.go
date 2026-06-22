@@ -73,24 +73,26 @@ func SetupDatabase() (database.AppDatabase, error) {
 	return db, nil
 }
 
-func SetupBackend(addr string, port string, db database.AppDatabase) error {
-	api, err := api.New(api.Config{
+func SetupBackend(addr string, port string, db database.AppDatabase) (api.Router, error) {
+	router, err := api.New(api.Config{
 		Logger:   slog.Default(),
 		Database: db,
 	})
 
 	if err != nil {
-		return err
+		return nil, err
 	}
-
-	router := api.Handler()
 
 	go func() {
 		c := cors.Default()
-		http.ListenAndServe(addr+":"+port, c.Handler(router))
+		if err := http.ListenAndServe(addr+":"+port, c.Handler(router.Handler())); err != nil {
+			slog.Error("Backend stopped", "err", err)
+		}
 	}()
 
-	return nil
+	slog.Info("Backend started", "addr", addr, "port", port)
+
+	return router, nil
 }
 
 func SetupDiscordCommands(app *App, testGuild ds.Snowflake) (bool, error) {
@@ -123,7 +125,14 @@ func Init(dbPath string) (*App, error) {
 	pkapiPort := os.Getenv("PKAPI_PORT")
 
 	slog.Debug("Starting store api...")
-	go pkapi.Start(pkapiPort)
+
+	ctx, cancelPkapi := context.WithCancel(context.Background())
+
+	go func() {
+		if err := pkapi.Start(ctx, pkapiPort); err != nil {
+			slog.Error("Store API stopped", "err", err)
+		}
+	}()
 
 	db, err := SetupDatabase()
 
@@ -136,13 +145,13 @@ func Init(dbPath string) (*App, error) {
 	addr := os.Getenv("BACKEND_ADDR")
 	port := os.Getenv("BACKEND_PORT")
 
-	err = SetupBackend(addr, port, db)
+	rt, err := SetupBackend(addr, port, db)
 
 	if err != nil {
 		return nil, err
 	}
 
-	app := NewApp(db)
+	app := NewApp(db, rt, cancelPkapi)
 
 	testGuild := os.Getenv("TEST_GUILD")
 	global, err := SetupDiscordCommands(app, testGuild)
