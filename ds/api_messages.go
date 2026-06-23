@@ -1,14 +1,10 @@
 package ds
 
 import (
-	"bytes"
 	"cynthia/service/util"
 	"encoding/json"
 	"fmt"
-	"io"
-	"mime/multipart"
 	"net/http"
-	"net/textproto"
 )
 
 func (r *routes) CreateMessage(channelID Snowflake) (string, string) {
@@ -65,54 +61,24 @@ func (c *ApiClient) SendMessage(channelID Snowflake, msg *MessageBody) (*Message
 	return util.Decode[Message](res)
 }
 
-func (c *ApiClient) sendMultipart(method, endpoint string, msg *MessageBody) (*Message, error) {
-	buf := &bytes.Buffer{}
-	writer := multipart.NewWriter(buf)
-
-	j, err := json.Marshal(msg)
-
+func (c *ApiClient) sendMultipart(
+	method, endpoint string,
+	msg *MessageBody,
+) (*Message, error) {
+	buf, contentType, err := createMultipartBody(msg, msg.Files)
 	if err != nil {
 		return nil, err
 	}
-
-	if err := writer.WriteField("payload_json", string(j)); err != nil {
-		return nil, err
-	}
-
-	for i, f := range msg.Files {
-		ct := f.ContentType
-
-		if ct == "" {
-			ct = "application/octet-stream"
-		}
-
-		part, err := writer.CreatePart(textproto.MIMEHeader{
-			"Content-Disposition": {fmt.Sprintf(`form-data; name="files[%d]"; filename="%s"`, i, f.Name)},
-			"Content-Type":        {ct},
-		})
-
-		if err != nil {
-			return nil, err
-		}
-
-		if _, err := io.Copy(part, f.Reader); err != nil {
-			return nil, err
-		}
-	}
-
-	writer.Close()
 
 	req, err := http.NewRequest(method, ApiURL+endpoint, buf)
-
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set("Content-Type", contentType)
 	req.Header.Set("Authorization", "Bot "+c.botToken)
 
 	res, err := c.http.Do(req)
-
 	if err != nil {
 		return nil, err
 	}

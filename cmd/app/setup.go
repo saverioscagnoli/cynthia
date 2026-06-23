@@ -5,6 +5,7 @@ import (
 	"cynthia/ds"
 	"cynthia/pkapi"
 	"cynthia/service/api"
+	"cynthia/service/commands"
 	"cynthia/service/database"
 	"cynthia/store"
 	"fmt"
@@ -29,7 +30,7 @@ func SetupLogging() {
 	slog.SetDefault(slog.New(tint.NewHandler(os.Stderr, &tint.Options{
 		Level:      level,
 		TimeFormat: time.TimeOnly,
-		AddSource:  true,
+		AddSource:  false,
 		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
 			if a.Key == slog.LevelKey {
 				if lvl, ok := a.Value.Any().(slog.Level); ok && lvl == slog.LevelDebug {
@@ -96,7 +97,10 @@ func SetupBackend(addr string, port string, db database.AppDatabase) (api.Router
 }
 
 func SetupDiscordCommands(app *App, testGuild ds.Snowflake) (bool, error) {
-	app.ds.AddCommand(Ping{})
+	commands.Init(app.db)
+
+	app.ds.AddCommand(commands.Ping{})
+	app.ds.AddCommand(commands.Trainer{})
 
 	if testGuild != "" {
 		err := app.ds.RegisterGuildCommands(testGuild)
@@ -124,6 +128,7 @@ func Init(dbPath string) (*App, error) {
 
 	pkapiPort := os.Getenv("PKAPI_PORT")
 
+	slog.Debug("Initialized pkhelper.")
 	slog.Debug("Starting store api...")
 
 	ctx, cancelPkapi := context.WithCancel(context.Background())
@@ -137,6 +142,7 @@ func Init(dbPath string) (*App, error) {
 	db, err := SetupDatabase()
 
 	if err != nil {
+		cancelPkapi()
 		return nil, err
 	}
 
@@ -148,6 +154,7 @@ func Init(dbPath string) (*App, error) {
 	rt, err := SetupBackend(addr, port, db)
 
 	if err != nil {
+		cancelPkapi()
 		return nil, err
 	}
 

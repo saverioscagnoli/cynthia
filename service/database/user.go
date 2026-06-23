@@ -19,6 +19,7 @@ func (db *dbimpl) GetUser(id ds.Snowflake, ctx context.Context) (*models.User, e
             avatar_hash,
             money,
             sprite_id,
+            banner,
             created_at
         FROM users
         WHERE id = $1
@@ -32,6 +33,7 @@ func (db *dbimpl) GetUser(id ds.Snowflake, ctx context.Context) (*models.User, e
 		&user.AvatarHash,
 		&user.Money,
 		&user.SpriteID,
+		&user.Banner,
 		&user.CreatedAt,
 	)
 

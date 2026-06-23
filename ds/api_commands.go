@@ -1,6 +1,7 @@
 package ds
 
 import (
+	"cynthia/service/util"
 	"fmt"
 	"net/http"
 )
@@ -70,7 +71,7 @@ type SlashCommand interface {
 }
 
 type SlashCommandOptions interface {
-	Options() *[]ApplicationCommandOption
+	Options() []ApplicationCommandOption
 }
 
 func (c *Client) AddCommand(s SlashCommand) {
@@ -87,10 +88,10 @@ func (c *Client) makeSlashCommandBodies() []CreateCommandBody {
 		}
 
 		if o, ok := cmd.(SlashCommandOptions); ok {
-			body.Options = o.Options()
+			body.Options = util.Ptr(o.Options())
 		}
 
-		c.logger.Debug("Creating slash command", "name", cmd.Name())
+		c.logger.Debug("Creating slash command", "name", cmd.Name(), "options", body.Options)
 		bodies = append(bodies, body)
 	}
 
