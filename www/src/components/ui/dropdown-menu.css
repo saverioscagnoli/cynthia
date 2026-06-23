@@ -1,0 +1,44 @@
+@keyframes slideFade {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-menu-content {
+  animation: slideFade 75ms ease;
+}
+
+.dropdown-menu-subcontent[data-side="right"] {
+  animation: slideInRight 75ms ease;
+}
+
+.dropdown-menu-subcontent[data-side="left"] {
+  animation: slideInLeft 75ms ease;
+}

@@ -1,28 +1,55 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
 @import "tailwindcss";
 
 @import "@radix-ui/colors/slate.css";
 @import "@radix-ui/colors/slate-dark.css";
+@import "@radix-ui/colors/gray.css";
+@import "@radix-ui/colors/gray-dark.css";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@font-face {
+  font-family: "HGSS";
+  src: url("/pokemon-ds-font.ttf");
+  font-style: normal;
+  font-display: swap;
+}
+
 body {
-    background-color: var(--slate-1);
-    color: var(--slate-12);
+  background-color: var(--slate-1);
+  color: var(--slate-12);
+  font-family: "Inter", sanf-serif;
 }
 
 @keyframes bounce-sprite {
-    0%,
-    100% {
-        transform: translateY(0);
-    }
-    50% {
-        transform: translateY(-8px);
-    }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
 }
 
-.search-input {
-    &:focus-within {
-        outline: 2px solid var(--mantine-color-grape-filled);
-        border-color: transparent;
-    }
+.banner {
+  background-image: url("/pattern.svg");
+}
+
+html.dark .banner {
+  background-image: url("/pattern-dark.svg");
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-transition {
+  animation: fadeIn 0.2s ease-in-out;
 }

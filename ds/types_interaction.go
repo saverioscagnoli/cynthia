@@ -1,7 +1,7 @@
 package ds
 
 import (
-	"cynthia/util"
+	"cynthia/service/util"
 	"encoding/json"
 	"fmt"
 )
@@ -92,6 +92,7 @@ type InteractionCallbackData struct {
 	Components      []MessageComponent `json:"components"`
 	Attachments     []*Attachment      `json:"attachments"`
 	Poll            *Poll              `json:"poll"`
+	Files           []*MessageFile
 }
 
 type InteractionCallbackType int
@@ -210,11 +211,11 @@ func (a *ApplicationCommandType) UnmarshalJSON(b []byte) error {
 }
 
 type ApplicationCommandInteractionDataOption struct {
-	Name    string                       `json:"name"`
-	Type    ApplicationCommandOptionType `json:"type"`
-	Value   *any
-	Options *[]ApplicationCommandInteractionDataOption
-	Focused *bool
+	Name    string                                     `json:"name"`
+	Type    ApplicationCommandOptionType               `json:"type"`
+	Value   *json.RawMessage                           `json:"value"`
+	Options *[]ApplicationCommandInteractionDataOption `json:"options"`
+	Focused *bool                                      `json:"focused"`
 }
 
 type MessageComponentData struct {
@@ -231,10 +232,10 @@ type ModalSubmitData struct {
 }
 
 type ResolvedData struct {
-	Users      *map[Snowflake]User
-	Members    *map[Snowflake]GuildMember
-	Roles      *map[Snowflake]Role
-	Channels   *map[Snowflake]Channel
-	Messages   *map[Snowflake]Message
-	Attachment *map[Snowflake]Attachment
+	Users      *map[Snowflake]User        `json:"users"`
+	Members    *map[Snowflake]GuildMember `json:"members"`
+	Roles      *map[Snowflake]Role        `json:"roles"`
+	Channels   *map[Snowflake]Channel     `json:"channels"`
+	Messages   *map[Snowflake]Message     `json:"messages"`
+	Attachment *map[Snowflake]Attachment  `json:"attachment"`
 }

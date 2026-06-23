@@ -1,6 +1,7 @@
 package ds
 
 import (
+	"cynthia/service/util"
 	"fmt"
 	"net/http"
 )
@@ -54,4 +55,58 @@ func (c *ApiClient) BulkOverwriteGuildCommands(guildID Snowflake, body []CreateC
 	_, err := c.request(method, endpoint, body)
 
 	return err
+}
+
+func (c *ApiClient) BulkOverwriteGlobalCommands(body []CreateCommandBody) error {
+	method, endpoint := Routes.BulkOverwriteGlobalCommands(c.appID)
+	_, err := c.request(method, endpoint, body)
+
+	return err
+}
+
+type SlashCommand interface {
+	Name() string
+	Description() string
+	Handler(c *Client, i *InteractionCreate) error
+}
+
+type SlashCommandOptions interface {
+	Options() []ApplicationCommandOption
+}
+
+func (c *Client) AddCommand(s SlashCommand) {
+	c.Commands[s.Name()] = s
+}
+
+func (c *Client) makeSlashCommandBodies() []CreateCommandBody {
+	bodies := make([]CreateCommandBody, 0, len(c.Commands))
+
+	for _, cmd := range c.Commands {
+		body := CreateCommandBody{
+			Name:        cmd.Name(),
+			Description: cmd.Description(),
+		}
+
+		if o, ok := cmd.(SlashCommandOptions); ok {
+			body.Options = util.Ptr(o.Options())
+		}
+
+		c.logger.Debug("Creating slash command", "name", cmd.Name(), "options", body.Options)
+		bodies = append(bodies, body)
+	}
+
+	return bodies
+}
+
+func (c *Client) RegisterGuildCommands(guildID Snowflake) error {
+	bodies := c.makeSlashCommandBodies()
+
+	return c.Api.BulkOverwriteGuildCommands(guildID, bodies)
+
+}
+
+func (c *Client) RegisteGlobalCommands() error {
+	bodies := c.makeSlashCommandBodies()
+
+	return c.Api.BulkOverwriteGlobalCommands(bodies)
 }

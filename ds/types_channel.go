@@ -1,6 +1,6 @@
 package ds
 
-import "cynthia/util"
+import "cynthia/service/util"
 
 type Channel struct {
 	ID                            Snowflake        `json:"id"`
@@ -121,4 +121,10 @@ type WelcomeScreenChannel struct {
 	Description string     `json:"description"`
 	EmojiID     *Snowflake `json:"emoji_id"`
 	EmojiName   *string    `json:"emoji_name"`
+}
+
+type ChannelInfoChannel struct {
+	ID             Snowflake `json:"id"`
+	Status         *string   `json:"status"`
+	VoiceStartTime *int      `json:"voice_start_time"`
 }

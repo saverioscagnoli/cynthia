@@ -20,6 +20,7 @@ type Client struct {
 	handlers      map[string][]any
 	conn          *websocket.Conn
 	mu            sync.Mutex
+	Commands      map[string]SlashCommand
 	collectors    *collectorRegistry
 	sequence      int
 	lastHeartbeat atomic.Int64
@@ -48,6 +49,7 @@ func NewClient(token string, appID Snowflake, options ...ClientOption) *Client {
 		appID:      appID,
 		intents:    0,
 		handlers:   make(map[string][]any),
+		Commands:   make(map[string]SlashCommand),
 		collectors: newCollectorRegistry(),
 		logger:     slog.Default(),
 		Api:        *newApiClient(token, appID),

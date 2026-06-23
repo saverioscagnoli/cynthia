@@ -3,7 +3,11 @@ package main
 import (
 	"context"
 	"cynthia/ds"
-	"flag"
+	"cynthia/pkapi"
+	"cynthia/service/api"
+	"cynthia/service/commands"
+	"cynthia/service/database"
+	"cynthia/store"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -16,159 +20,158 @@ import (
 	"github.com/rs/cors"
 )
 
-func NewApp(
-	token string,
-	appID ds.Snowflake,
-	DB *DB,
-	mux *http.ServeMux,
-) *App {
-	return &App{
-		Client: ds.NewClient(token, appID, ds.WithIntents(ds.IntentAll)),
-		DB:     DB,
-		mux:    mux,
-	}
-}
-
 func SetupLogging() {
-	var level slog.Level
+	level := slog.LevelInfo
 
-	levelStr := flag.String("level", "info", "log level (debug, info, warn, error)")
-	flag.Parse()
-
-	if err := level.UnmarshalText([]byte(*levelStr)); err != nil {
-		level = slog.LevelInfo
+	if os.Getenv("APP_ENV") == "dev" {
+		level = slog.LevelDebug
 	}
 
 	slog.SetDefault(slog.New(tint.NewHandler(os.Stderr, &tint.Options{
 		Level:      level,
 		TimeFormat: time.TimeOnly,
-		AddSource:  true,
+		AddSource:  false,
+		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+			if a.Key == slog.LevelKey {
+				if lvl, ok := a.Value.Any().(slog.Level); ok && lvl == slog.LevelDebug {
+					return tint.Attr(33, a)
+				}
+			}
+
+			return a
+		},
 	})))
 }
 
-func SetupDatabase(username string, passwd string, host string, port string) (*pgxpool.Pool, context.Context, error) {
+func SetupDatabase() (database.AppDatabase, error) {
+	username := os.Getenv("DB_USERNAME")
+	passwd := os.Getenv("DB_PASSWD")
+	host := os.Getenv("DB_HOST")
+	port := os.Getenv("DB_PORT")
+
 	ctx := context.Background()
 	addr := fmt.Sprintf("postgres://%s:%s@%s:%s/pokemon", username, passwd, host, port)
 	pool, err := pgxpool.New(ctx, addr)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	err = pool.Ping(ctx)
+	db, err := database.New(pool)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return pool, ctx, nil
+	err = db.Ping(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	slog.Debug("Database ping successful")
+
+	return db, nil
 }
 
-func createBotSchema(ctx context.Context, pool *pgxpool.Pool) error {
-	stmts := []string{
-		`CREATE TABLE IF NOT EXISTS users (
-    		discord_id  TEXT      PRIMARY KEY NOT NULL,
-    		username    TEXT      NOT NULL,
-    		avatar      TEXT,
-    		trainer_id  INTEGER   DEFAULT 0,
-    		created_at  TIMESTAMP NOT NULL DEFAULT NOW()
-      	)`,
-		`CREATE TABLE IF NOT EXISTS trainers (
-			id         TEXT      PRIMARY KEY NOT NULL,
-			money      INTEGER   NOT NULL DEFAULT 0,
-			created_at TIMESTAMP NOT NULL DEFAULT NOW()
-		)`,
-		`CREATE TABLE IF NOT EXISTS owned_pokemons (
-			id           SERIAL    PRIMARY KEY,
-			trainer_id   TEXT      NOT NULL REFERENCES trainers(id),
-			pokemon_id   INTEGER   NOT NULL,
-			nickname     TEXT,
-			level        INTEGER   NOT NULL DEFAULT 1,
-			exp          INTEGER   NOT NULL DEFAULT 0,
-			held_item_id INTEGER,
-			created_at   TIMESTAMP NOT NULL DEFAULT NOW()
-		)`,
-		`CREATE TABLE IF NOT EXISTS owned_pokemon_moves (
-			owned_pokemon_id INTEGER NOT NULL REFERENCES owned_pokemons(id),
-			move_id          INTEGER NOT NULL,
-			slot             INTEGER NOT NULL CHECK(slot BETWEEN 1 AND 4),
-			PRIMARY KEY (owned_pokemon_id, slot)
-		)`,
-		`CREATE TABLE IF NOT EXISTS owned_pokemon_stats (
-			owned_pokemon_id INTEGER NOT NULL REFERENCES owned_pokemons(id),
-			stat_id          INTEGER NOT NULL,
-			value            INTEGER NOT NULL,
-			PRIMARY KEY (owned_pokemon_id, stat_id)
-		)`,
-		`CREATE TABLE IF NOT EXISTS bag (
-			trainer_id TEXT    NOT NULL REFERENCES trainers(id),
-			item_id    INTEGER NOT NULL,
-			quantity   INTEGER NOT NULL DEFAULT 1 CHECK(quantity > 0),
-			PRIMARY KEY (trainer_id, item_id)
-		)`,
+func SetupBackend(addr string, port string, db database.AppDatabase) (api.Router, error) {
+	router, err := api.New(api.Config{
+		Logger:   slog.Default(),
+		Database: db,
+	})
+
+	if err != nil {
+		return nil, err
 	}
-
-	for _, s := range stmts {
-		if _, err := pool.Exec(ctx, s); err != nil {
-			return fmt.Errorf("bot schema error: %w\nstatement: %s", err, s)
-		}
-	}
-
-	return nil
-}
-
-func SetupBackend(addr string, port string) *http.ServeMux {
-	mux := http.NewServeMux()
 
 	go func() {
 		c := cors.Default()
-		err := http.ListenAndServe(fmt.Sprintf("%s:%s", addr, port), c.Handler(mux))
-
-		if err != nil {
-			slog.Error("Backend server", "err", err)
-			return
+		if err := http.ListenAndServe(addr+":"+port, c.Handler(router.Handler())); err != nil {
+			slog.Error("Backend stopped", "err", err)
 		}
 	}()
 
-	return mux
+	slog.Info("Backend started", "addr", addr, "port", port)
+
+	return router, nil
 }
 
-func Init() (*App, error) {
+func SetupDiscordCommands(app *App, testGuild ds.Snowflake) (bool, error) {
+	commands.Init(app.db)
+
+	app.ds.AddCommand(commands.Ping{})
+	app.ds.AddCommand(commands.Trainer{})
+
+	if testGuild != "" {
+		err := app.ds.RegisterGuildCommands(testGuild)
+		return false, err
+	}
+
+	err := app.ds.RegisteGlobalCommands()
+	return true, err
+}
+
+func Init(dbPath string) (*App, error) {
+	err := godotenv.Load()
+
 	SetupLogging()
-	godotenv.Load()
-
-	slog.Info("Secrets loaded.")
-
-	dbUsername := os.Getenv("DB_USERNAME")
-	dbPasswd := os.Getenv("DB_PASSWD")
-	dbHost := os.Getenv("DB_HOST")
-	dbPort := os.Getenv("DB_PORT")
-
-	pool, ctx, err := SetupDatabase(dbUsername, dbPasswd, dbHost, dbPort)
 
 	if err != nil {
+		return nil, err
+	}
+
+	slog.Debug("Secrets loaded")
+
+	slog.Debug("Extracting data...")
+	store.Extract(dbPath)
+	slog.Info("Pokemon store filled")
+
+	pkapiPort := os.Getenv("PKAPI_PORT")
+
+	slog.Debug("Initialized pkhelper.")
+	slog.Debug("Starting store api...")
+
+	ctx, cancelPkapi := context.WithCancel(context.Background())
+
+	go func() {
+		if err := pkapi.Start(ctx, pkapiPort); err != nil {
+			slog.Error("Store API stopped", "err", err)
+		}
+	}()
+
+	db, err := SetupDatabase()
+
+	if err != nil {
+		cancelPkapi()
 		return nil, err
 	}
 
 	slog.Info("Connected to database.")
 
-	err = createBotSchema(ctx, pool)
+	addr := os.Getenv("BACKEND_ADDR")
+	port := os.Getenv("BACKEND_PORT")
+
+	rt, err := SetupBackend(addr, port, db)
 
 	if err != nil {
+		cancelPkapi()
 		return nil, err
 	}
 
-	slog.Info("Checked database schema")
+	app := NewApp(db, rt, cancelPkapi)
 
-	backendAddr := os.Getenv("BACKEND_ADDR")
-	backendPort := os.Getenv("BACKEND_PORT")
+	testGuild := os.Getenv("TEST_GUILD")
+	global, err := SetupDiscordCommands(app, testGuild)
 
-	mux := SetupBackend(backendAddr, backendPort)
+	if err != nil {
+		return app, err
+	}
 
-	slog.Info("Backend listening.", "addr", fmt.Sprintf("%s:%s", backendAddr, backendPort))
+	if global {
+		slog.Info("Registered commands", "count", len(app.ds.Commands))
+	} else {
+		slog.Info("Registered guild commands", "count", len(app.ds.Commands), "guild", testGuild)
+	}
 
-	token := os.Getenv("TOKEN")
-	appID := os.Getenv("APP_ID")
-
-	return NewApp(token, appID, &DB{Pool: pool, Context: ctx}, mux), nil
+	return app, nil
 }

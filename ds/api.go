@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
+	"mime/multipart"
 	"net/http"
+	"net/textproto"
 )
 
 const ApiURL = "https://discord.com/api"
@@ -75,4 +78,78 @@ func (c *ApiClient) Put(endpoint string, body any) (*http.Response, error) {
 
 func (c *ApiClient) Delete(endpoint string) (*http.Response, error) {
 	return c.request(http.MethodDelete, endpoint, nil)
+}
+
+func createMultipartBody(payload any, files []*MessageFile) (*bytes.Buffer, string, error) {
+	buf := &bytes.Buffer{}
+	writer := multipart.NewWriter(buf)
+
+	j, err := json.Marshal(payload)
+	if err != nil {
+		return nil, "", err
+	}
+
+	if err := writer.WriteField("payload_json", string(j)); err != nil {
+		return nil, "", err
+	}
+
+	for i, f := range files {
+		ct := f.ContentType
+		if ct == "" {
+			ct = "application/octet-stream"
+		}
+
+		part, err := writer.CreatePart(textproto.MIMEHeader{
+			"Content-Disposition": {
+				fmt.Sprintf(`form-data; name="files[%d]"; filename="%s"`, i, f.Name),
+			},
+			"Content-Type": {ct},
+		})
+
+		if err != nil {
+			return nil, "", err
+		}
+
+		if _, err := io.Copy(part, f.Reader); err != nil {
+			return nil, "", err
+		}
+	}
+
+	if err := writer.Close(); err != nil {
+		return nil, "", err
+	}
+
+	return buf, writer.FormDataContentType(), nil
+}
+
+func (c *ApiClient) multipartRequest(
+	method string,
+	endpoint string,
+	payload any,
+	files []*MessageFile,
+	useBotAuth bool,
+) (*http.Response, error) {
+	buf, contentType, err := createMultipartBody(payload, files)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(
+		method,
+		ApiURL+endpoint,
+		buf,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", contentType)
+
+	if useBotAuth {
+		req.Header.Set("Authorization", "Bot "+c.botToken)
+	}
+
+	return c.http.Do(req)
 }

@@ -1,7 +1,7 @@
 package ds
 
 import (
-	"cynthia/util"
+	"cynthia/service/util"
 	"encoding/json"
 	"io"
 	"time"
@@ -392,4 +392,26 @@ const (
 
 func (t *StickerType) UnmarshalJSON(data []byte) error {
 	return util.UnmarshalNumeric(data, t)
+}
+
+type ReactionType int
+
+const (
+	ReactionTypeNormal ReactionType = 0
+	ReactionTypeBurst  ReactionType = 1
+)
+
+func (r *ReactionType) UnmarshalJSON(b []byte) error {
+	return util.UnmarshalNumeric(b, r)
+}
+
+type AnimationType int
+
+const (
+	AnimationTypePremium AnimationType = 0
+	AnimationTypeBasic   AnimationType = 1
+)
+
+func (a *AnimationType) UnmarshalJSON(b []byte) error {
+	return util.UnmarshalNumeric(b, a)
 }

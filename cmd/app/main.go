@@ -1,77 +1,70 @@
 package main
 
 import (
-	"context"
 	"cynthia/ds"
+	"flag"
 	"fmt"
 	"log/slog"
-	"net/http"
-
-	"github.com/jackc/pgx/v5/pgxpool"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
-type DB struct {
-	*pgxpool.Pool
-	context.Context
-}
-
-type App struct {
-	*ds.Client
-	DB  *DB
-	mux *http.ServeMux
-}
-
 func main() {
-	app, err := Init()
+	dbPath := flag.String("db-path", "assets/pokemon.db", "Database path from where to extract information")
+	flag.Parse()
 
-	app.SetupMuxHandler()
+	app, err := Init(*dbPath)
 
 	if err != nil {
-		slog.Error("Initialization", "err", err)
+		slog.Error("Failed to initialize app", "err", err)
+		return
 	}
 
-	defer app.DB.Close()
+	slog.Info("App setup completed")
 
-	slog.Info("App initialized.")
-
-	RegisterCommands(app.Client, app.DB)
-
-	ds.On(app.Client, ds.EventReady, func(c *ds.Client, r *ds.Ready) {
-		slog.Info("Ready event received.", "username", r.User.Username, "version", r.Version)
+	ds.On(app.ds, ds.EventReady, func(c *ds.Client, a *ds.Ready) {
+		slog.Info("Ready event received", "version", a.Version)
 	})
 
-	ds.On(app.Client, ds.EventMessageCreate, func(c *ds.Client, msg *ds.MessageCreate) {
+	ds.On(app.ds, ds.EventMessageCreate, func(c *ds.Client, msg *ds.MessageCreate) {
 		if msg.Content == "!ping" {
-			text := fmt.Sprintf("Pong! `%dms`", c.Latency().Milliseconds())
-			c.Api.SendMessageText(msg.ChannelID, text)
-		}
-	})
-
-	ds.On(app.Client, ds.EventInteractionCreate, func(c *ds.Client, i *ds.InteractionCreate) {
-		if i.Type == ds.InteractionTypeApplicationCommand || i.Type == ds.InteractionTypeApplicationCommandAutocomplete {
-			if i.Data == nil {
-				slog.Warn("Received command interaction with nil data")
-				return
-			}
-
-			data, err := i.ApplicationCommandData()
+			_, err := c.Api.SendMessageText(msg.ChannelID, fmt.Sprintf("Pong! `%dms`", c.Latency().Milliseconds()))
 
 			if err != nil {
-				slog.Error("Failed to unmarshal command interaction data", "err", err)
+				slog.Error("Error in message create", "err", err)
 				return
-			}
-
-			if cmd, ok := CommandsRegistry[data.Name]; ok {
-				cmd.Handler(c, i)
-			} else {
-				slog.Error("Couldnt find handler for interaction command", "name", data.Name)
 			}
 		}
 	})
 
-	err = app.Client.Login()
+	ds.On(app.ds, ds.EventInteractionCreate, func(c *ds.Client, i *ds.InteractionCreate) {
+		if i.Type == ds.InteractionTypeApplicationCommand {
+			data, _ := i.ApplicationCommandData()
 
-	if err != nil {
-		slog.Error("Gateway", "err", err)
+			if cmd, ok := c.Commands[data.Name]; ok {
+				err := cmd.Handler(c, i)
+
+				if err != nil {
+					slog.Error("Error during command execution", "err", err)
+				}
+			} else {
+				slog.Error("Slash command not found", "cmd", data.Name)
+			}
+		}
+	})
+
+	go app.ds.Login()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	slog.Warn("Shutting down")
+
+	app.pkapiStop()
+
+	if err := app.rt.Close(); err != nil {
+		slog.Error("Error closing router", "err", err)
 	}
 }

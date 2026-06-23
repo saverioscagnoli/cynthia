@@ -1,18 +1,17 @@
+import { App } from "~/app";
+import { AuthProvider } from "~/contexts/auth";
+import { ThemeProvider } from "~/contexts/theme";
 import { createRoot } from "react-dom/client";
-import { App } from "./App.tsx";
 import { BrowserRouter } from "react-router";
-import { MantineProvider } from "@mantine/core";
-import { AuthProvider } from "~/contexts/auth.tsx";
 
 import "~/index.css";
-import "@mantine/core/styles.css";
 
 createRoot(document.getElementById("root")!).render(
+  <ThemeProvider>
     <AuthProvider>
-        <MantineProvider defaultColorScheme="dark">
-            <BrowserRouter>
-                <App />
-            </BrowserRouter>
-        </MantineProvider>
-    </AuthProvider>,
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </AuthProvider>
+  </ThemeProvider>
 );
