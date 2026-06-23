@@ -1,7 +1,7 @@
 package ds
 
 import (
-	"cynthia/util"
+	"cynthia/service/util"
 	"encoding/json"
 	"fmt"
 )

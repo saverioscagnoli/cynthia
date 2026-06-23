@@ -1,6 +1,6 @@
 package ds
 
-import "cynthia/util"
+import "cynthia/service/util"
 
 type Guild struct {
 	ID                        Snowflake                  `json:"id"`

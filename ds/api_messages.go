@@ -2,7 +2,7 @@ package ds
 
 import (
 	"bytes"
-	"cynthia/util"
+	"cynthia/service/util"
 	"encoding/json"
 	"fmt"
 	"io"

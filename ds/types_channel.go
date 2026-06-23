@@ -1,6 +1,6 @@
 package ds
 
-import "cynthia/util"
+import "cynthia/service/util"
 
 type Channel struct {
 	ID                            Snowflake        `json:"id"`
