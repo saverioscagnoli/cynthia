@@ -1,7 +1,7 @@
 package ds
 
 import (
-	"cynthia/service/util"
+	"cynthia/util"
 	"strconv"
 )
 
@@ -86,4 +86,41 @@ type UserPrimaryGuild struct {
 	IdentityEnabled *bool      `json:"identity_enabled"`
 	Tag             *string    `json:"tag"`
 	Badge           *string    `json:"badge"`
+}
+
+type VoiceState struct {
+	GuildID                 *Snowflake   `json:"guild_id"`
+	ChannelID               *Snowflake   `json:"channel_id"`
+	UserID                  Snowflake    `json:"user_id"`
+	Member                  *GuildMember `json:"member"`
+	SessionID               string       `json:"session_id"`
+	Deaf                    bool         `json:"deaf"`
+	Mute                    bool         `json:"mute"`
+	SelfDeaf                bool         `json:"self_deaf"`
+	SelfMute                bool         `json:"self_mute"`
+	SelfStream              *bool        `json:"self_stream"`
+	SelfVideo               bool         `json:"self_video"`
+	Suppress                bool         `json:"suppress"`
+	RequestToSpeakTimestamp string       `json:"request_to_speak_timestamp"`
+}
+
+type PresenceStatus string
+
+const (
+	PresenceStatusIdle    PresenceStatus = "idle"
+	PresenceStatusDnd     PresenceStatus = "dnd"
+	PresenceStatusOnline  PresenceStatus = "online"
+	PresenceStatusOffline PresenceStatus = "offline"
+)
+
+func (p *PresenceStatus) UnmarshalJSON(b []byte) error {
+	return util.UnmarshalString(b, p)
+}
+
+type Presence struct {
+	User         User           `json:"user"`
+	GuildID      Snowflake      `json:"guild_id"`
+	Status       PresenceStatus `json:"presence_status"`
+	Activities   []Activity     `json:"activities"`
+	ClientStatus ClientStatus   `json:"client_status"`
 }

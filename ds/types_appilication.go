@@ -1,6 +1,6 @@
 package ds
 
-import "cynthia/service/util"
+import "cynthia/util"
 
 type Application struct {
 	ID                                Snowflake                           `json:"id"`

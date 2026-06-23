@@ -1,7 +1,7 @@
 package ds
 
 import (
-	"cynthia/service/util"
+	"cynthia/util"
 	"fmt"
 	"net/http"
 )

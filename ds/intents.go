@@ -1,6 +1,6 @@
 package ds
 
-import "cynthia/service/util"
+import "cynthia/util"
 
 type Intent uint64
 
