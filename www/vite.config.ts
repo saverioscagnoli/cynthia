@@ -2,6 +2,14 @@ import { defineConfig } from "vite";
 import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import babel from "@rolldown/plugin-babel";
 import tailwind from "@tailwindcss/vite";
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -9,11 +17,7 @@ export default defineConfig({
   resolve: {
     tsconfigPaths: true,
   },
-  server: {
-    proxy: {
-      "/auth": "http://localhost:3247",
-      "/user": "http://localhost:3247",
-      "/sprites": "http://localhost:3247",
-    },
+  define: {
+    __API_URL__: JSON.stringify(process.env.BASE_URL),
   },
 });

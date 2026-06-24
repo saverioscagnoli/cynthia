@@ -4,15 +4,15 @@ import { useAuth } from "~/contexts/auth";
 import { ProfileMenu } from "./profile-menu";
 
 const UserDisplay = () => {
-  const { user, logout } = useAuth();
-  let u = user!;
+  const { loggedUser, logout } = useAuth();
+  const user = loggedUser!;
 
   return (
     <div className={cn("w-fit", "flex items-center gap-4")}>
       <ProfileMenu>
         <div className={cn("flex items-center gap-4", "cursor-pointer")}>
-          <Avatar size="sm" src={dsAvatar(u.id, u.avatar_hash)} />
-          <p>{u.username}</p>
+          <Avatar size="sm" src={dsAvatar(user.id, user.avatar_hash)} />
+          <p>{user.username}</p>
         </div>
       </ProfileMenu>
       <Button variant="soft" colorScheme="red" onClick={logout}>

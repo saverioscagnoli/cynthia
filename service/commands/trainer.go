@@ -40,12 +40,13 @@ func (t Trainer) Handler(client *ds.Client, i *ds.InteractionCreate) error {
 
 	client.Api.InteractionDefer(i)
 
-	var userID string
+	var user *ds.User = nil
 
 	if data.Options == nil {
-
-		userID = i.Member.User.ID
+		user = i.Member.User
 	} else {
+		var userID ds.Snowflake
+
 		for _, opt := range *data.Options {
 			if opt.Name == "user" {
 
@@ -54,9 +55,12 @@ func (t Trainer) Handler(client *ds.Client, i *ds.InteractionCreate) error {
 				}
 			}
 		}
+
+		u := (*data.Resolved.Users)[userID]
+		user = &u
 	}
 
-	user, err := db.GetUser(userID, context.Background())
+	u, err := db.GetOrInsertUser(user, context.Background())
 
 	if err != nil {
 		return client.Api.InteractionReplyTextEphemeral(i, "Failed to fetch user data. Please retry.")
@@ -64,8 +68,8 @@ func (t Trainer) Handler(client *ds.Client, i *ds.InteractionCreate) error {
 
 	d := &ds.InteractionCallbackData{}
 
-	if user.SpriteID != nil {
-		img, ok := store.TrainerSprites[*user.SpriteID]
+	if u.SpriteID != nil {
+		img, ok := store.TrainerSprites[*u.SpriteID]
 
 		if ok {
 			d.Files = []*ds.MessageFile{{Name: "trainer.png", ContentType: "image/png", Reader: bytes.NewBuffer(*img)}}
@@ -76,10 +80,10 @@ func (t Trainer) Handler(client *ds.Client, i *ds.InteractionCreate) error {
 		WithTitle(fmt.Sprintf("%s's trainer page", user.Username)).
 		WithURL("http://localhost:5173/account").
 		WithThumbnail(&ds.EmbedImage{URL: "attachment://trainer.png"}).
-		WithAuthor(&ds.EmbedAuthor{Name: &user.DiscordUsername, IconURL: util.Ptr(ds.Routes.AvatarURL(userID, *user.AvatarHash))})
+		WithAuthor(&ds.EmbedAuthor{Name: &u.DiscordUsername, IconURL: util.Ptr(ds.Routes.AvatarURL(u.ID, *u.AvatarHash))})
 
 	if user.Banner != nil {
-		d.Files = append(d.Files, &ds.MessageFile{Name: "banner.jpg", ContentType: "image/jpg", Reader: bytes.NewBuffer(*user.Banner)})
+		d.Files = append(d.Files, &ds.MessageFile{Name: "banner.jpg", ContentType: "image/jpg", Reader: bytes.NewBuffer(*u.Banner)})
 
 		embed = embed.WithImage(&ds.EmbedImage{URL: "attachment://banner.jpg"})
 	}

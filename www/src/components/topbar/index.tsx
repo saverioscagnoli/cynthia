@@ -9,7 +9,7 @@ import { TopbarCenterSection } from "./center";
 import { UserDisplay } from "./user";
 
 const Topbar = () => {
-  const { logged } = useAuth();
+  const { loggedUser } = useAuth();
   const { theme, toggle: toggleTheme } = useTheme();
   const nav = useNavigate();
 
@@ -32,10 +32,10 @@ const Topbar = () => {
       />
       <TopbarCenterSection />
       <div className={cn("flex items-center gap-4")}>
-        {logged ? (
+        {loggedUser ? (
           <UserDisplay />
         ) : (
-          <a href="/auth/login">
+          <a href={`${__API_URL__}/api/auth/login`}>
             <Button colorScheme="blue" leftIcon={<BsDiscord />}>
               Login with Discord
             </Button>

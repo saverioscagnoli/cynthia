@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { getLoggedUser } from "~/lib/backend";
+import { privateApi } from "~/lib/wrapper";
 
 type BagItem = {
   item_id: number;
@@ -18,17 +18,17 @@ type User = {
   money: number;
   sprite_id?: number;
   bag: BagItem[];
-  banner?: Blob;
+  banner: number[] | null;
   created_at: string;
 };
 
 type AuthContextT = {
-  user: User | null;
+  loggedUser: User | null;
+  updateLoggedUser: (u: Partial<User>) => void;
   token: string | null;
   logout: () => void;
   logged: boolean;
   authFetch: (input: string, init?: RequestInit) => Promise<Response>;
-  updateUser: (u: Partial<User>) => void;
 };
 
 const AuthContext = createContext<AuthContextT | null>(null);
@@ -59,21 +59,19 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const fetchUser = async () => {
-    let res = await fetch("/user/me", {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    let result = await privateApi.getLoggedUser(token!);
 
-    if (res.status === 401) {
-      logout();
+    if (!result.ok) {
+      if (result.error.status === 401) {
+        logout();
+        return;
+      }
+
+      console.error(result.error);
       return;
     }
 
-    try {
-      let user = await getLoggedUser(token!);
-      setUser(user);
-    } catch (err) {
-      console.error(err);
-    }
+    setUser(result.data);
   };
 
   useEffect(() => {
@@ -102,12 +100,12 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   return (
     <AuthContext.Provider
       value={{
-        user,
+        loggedUser: user,
+        updateLoggedUser: updateUser,
         token,
         logout,
         logged: user !== null,
-        authFetch,
-        updateUser
+        authFetch
       }}
     >
       {children}

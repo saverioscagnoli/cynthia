@@ -56,6 +56,21 @@ func (db *dbimpl) GetUser(id ds.Snowflake, ctx context.Context) (*models.User, e
 	return &user, nil
 }
 
+func (db *dbimpl) GetOrInsertUser(user *ds.User, ctx context.Context) (*models.User, error) {
+	_, err := db.Pool.Exec(ctx,
+		`INSERT INTO users (id, username, discord_username, avatar_hash)
+        VALUES ($1, $2, $2, $3)
+        ON CONFLICT (id) DO NOTHING`,
+		user.ID, user.Username, user.Avatar,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return db.GetUser(user.ID, ctx)
+}
+
 func (db *dbimpl) GetBagItems(userID ds.Snowflake, ctx context.Context) ([]models.BagItem, error) {
 	rows, err := db.Pool.Query(ctx, `
         SELECT item_id, quantity FROM bag WHERE user_id = $1

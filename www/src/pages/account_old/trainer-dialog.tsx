@@ -1,9 +1,10 @@
-import { useRef, useState } from "react";
+import { Suspense, useRef, useState } from "react";
 import { useHotkey } from "@util-hooks/use-hotkey";
 import { Button, Input } from "~/components/ui";
 import { Dialog } from "~/components/ui/dialog";
-import { updateTrainerSprite } from "~/lib/backend";
 import { cn } from "~/lib/utils";
+import { privateApi } from "~/lib/wrapper";
+import { useAccount } from "~/contexts/account";
 import { useAuth } from "~/contexts/auth";
 import { TrainerList } from "./trainer-list";
 
@@ -14,26 +15,30 @@ type TrainerSelectDialogProps = {
 const TrainerSelectDialog: React.FC<TrainerSelectDialogProps> = ({
   children
 }) => {
-  const { token, updateUser } = useAuth();
+  const { user, updateUser } = useAccount();
+  const { token, loggedUser, updateLoggedUser } = useAuth();
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<number | null>(null);
+
   const modalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useHotkey(modalRef, ["ctrl"], "f", e => {
+  useHotkey(window, ["ctrl"], "f", e => {
     e.preventDefault();
     if (inputRef.current) inputRef.current.focus();
   });
 
   const onTrainerSpriteChange = async () => {
-    try {
-      await updateTrainerSprite(token, selected);
-    } catch (e) {
-      console.error(e);
-      return;
-    }
+    if (!token || !selected) return;
+
+    await privateApi.updateTrainerSprite(token, selected);
 
     updateUser({ sprite_id: selected });
+
+    if (loggedUser?.id === user.id) {
+      updateLoggedUser({ sprite_id: selected });
+    }
+
     setSelected(null);
   };
 
@@ -49,7 +54,7 @@ const TrainerSelectDialog: React.FC<TrainerSelectDialogProps> = ({
       <Dialog.Trigger asChild>{children}</Dialog.Trigger>
       <Dialog.Content
         className={cn("h-full w-[75vw]! max-w-none!", "flex flex-col gap-6")}
-        ref={modalRef}
+        ref={modalRef as React.RefObject<HTMLDivElement>}
       >
         <Dialog.Close />
         <Dialog.Title>Select new trainer sprite</Dialog.Title>
@@ -59,11 +64,13 @@ const TrainerSelectDialog: React.FC<TrainerSelectDialogProps> = ({
           onChange={e => setSearch(e.target.value)}
           ref={inputRef}
         />
-        <TrainerList
-          query={search}
-          selected={selected}
-          setSelected={setSelected}
-        />
+        <Suspense>
+          <TrainerList
+            query={search}
+            selected={selected}
+            setSelected={setSelected}
+          />
+        </Suspense>
         <div className={cn("flex justify-end gap-4")}>
           <Button variant="soft" colorScheme="gray">
             Cancel

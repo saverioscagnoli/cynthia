@@ -9,7 +9,8 @@ type ProfileMenuProps = {
 };
 
 const ProfileMenu: React.FC<ProfileMenuProps> = ({ children }) => {
-  const { logout } = useAuth();
+  const { loggedUser, logout } = useAuth();
+  const user = loggedUser!;
   const nav = useNavigate();
 
   const onLogout = () => {
@@ -31,7 +32,7 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({ children }) => {
         <DropdownMenu.Label>Profile</DropdownMenu.Label>
         <DropdownMenu.Item
           leftIcon={<LuUser />}
-          onClick={() => nav("/account")}
+          onClick={() => nav(`/user/${user.id}`)}
         >
           Account
         </DropdownMenu.Item>

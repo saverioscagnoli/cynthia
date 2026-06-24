@@ -11,6 +11,7 @@ import (
 type AppDatabase interface {
 	Ping(ctx context.Context) error
 	GetUser(id ds.Snowflake, ctx context.Context) (*models.User, error)
+	GetOrInsertUser(user *ds.User, ctx context.Context) (*models.User, error)
 	GetBagItems(userID ds.Snowflake, ctx context.Context) ([]models.BagItem, error)
 	GetUserBanner(userID ds.Snowflake, ctx context.Context) (*[]byte, error)
 

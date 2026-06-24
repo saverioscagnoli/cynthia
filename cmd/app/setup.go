@@ -84,9 +84,29 @@ func SetupBackend(addr string, port string, db database.AppDatabase) (api.Router
 		return nil, err
 	}
 
+	h := router.Handler()
+
+	h, err = registerWebUI(h)
+
+	if err != nil {
+		return nil, err
+	}
+
 	go func() {
-		c := cors.Default()
-		if err := http.ListenAndServe(addr+":"+port, c.Handler(router.Handler())); err != nil {
+
+		var c *cors.Cors
+
+		if os.Getenv("APP_ENV") == "dev" {
+			c = cors.New(cors.Options{
+				AllowedOrigins: []string{"*"},
+				AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+				AllowedHeaders: []string{"*"},
+			})
+		} else {
+			c = cors.Default()
+		}
+
+		if err := http.ListenAndServe(addr+":"+port, c.Handler(h)); err != nil {
 			slog.Error("Backend stopped", "err", err)
 		}
 	}()

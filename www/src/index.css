@@ -50,6 +50,18 @@ html.dark .banner {
   }
 }
 
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
 .page-transition {
   animation: fadeIn 0.2s ease-in-out;
 }

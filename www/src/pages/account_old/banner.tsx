@@ -1,73 +1,53 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Cross1Icon, Pencil1Icon } from "@radix-ui/react-icons";
 import { Button } from "~/components/ui";
-import { deleteBanner, uploadBanner } from "~/lib/backend";
 import { cn } from "~/lib/utils";
+import { privateApi } from "~/lib/wrapper";
+import { useAccount } from "~/contexts/account";
 import { useAuth } from "~/contexts/auth";
-import { useProfileEdit } from "~/contexts/profile-edit";
 import { useTheme } from "~/contexts/theme";
 
 const UserBanner = () => {
+  const { user, isEditing, stopEdit } = useAccount();
   const { token } = useAuth();
   const { theme } = useTheme();
-  const { editing, stopEditing } = useProfileEdit();
-  const [bannerURL, setBannerURL] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    fetch("/user/banner", {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(res => {
-        if (!res.ok) throw new Error("no banner");
-        return res.blob();
-      })
-      .then(blob => setBannerURL(URL.createObjectURL(blob)))
-      .catch(() => setBannerURL(null));
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (bannerURL) URL.revokeObjectURL(bannerURL);
-    };
-  }, [bannerURL]);
+  const [a, setA] = useState(1);
 
   const onEditClick = () => {
     fileInputRef.current?.click();
   };
 
-  const onBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onBannerChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-
     if (!file || !token) return;
 
-    const localURL = URL.createObjectURL(file);
-    setBannerURL(localURL);
-    stopEditing();
-    uploadBanner(token, file);
+    stopEdit();
+    await privateApi.updateBanner(token, file);
+    setA(a => a + 1); // bust cache
   };
 
   const onBannerDelete = async () => {
-    try {
-      await deleteBanner(token);
-    } catch (e) {
-      console.error(e);
-      return;
-    }
+    if (!token) return;
 
-    setBannerURL(null);
-    stopEditing();
+    stopEdit();
+    await privateApi.deleteBanner(token);
+    setA(a => a + 1); // bust cache
   };
 
   return (
     <div className={cn("absolute inset-0")}>
       <img
+        key={`${a}-${theme}`}
         className={cn("h-full w-full", "object-cover", "rounded-2xl")}
-        src={
-          bannerURL ?? (theme === "dark" ? "/pattern-dark.svg" : "/pattern.svg")
-        }
+        src={`http://localhost:3247/api/user/${user.id}/banner?v=${a}`}
+        onError={e => {
+          e.currentTarget.src =
+            theme === "dark" ? "/pattern-dark.svg" : "/pattern.svg";
+        }}
       />
-      {editing && (
+      {isEditing && (
         <>
           <input
             ref={fileInputRef}

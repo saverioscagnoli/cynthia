@@ -33,6 +33,38 @@ func (rt *_router) GetLoggedUser(w http.ResponseWriter, r *http.Request, ctx Req
 	}
 }
 
+func (rt *_router) GetUser(w http.ResponseWriter, r *http.Request, ctx RequestContext) {
+	id := r.PathValue("id")
+
+	if id == "" {
+		http.Error(w, "user not found", http.StatusNotFound)
+		return
+	}
+
+	user, err := rt.db.GetUser(id, r.Context())
+
+	if err != nil {
+		http.Error(w, "database error", http.StatusInternalServerError)
+		return
+	}
+
+	if user == nil {
+		http.Error(w, "user not found", http.StatusNotFound)
+		return
+	}
+
+	if user.Banner != nil {
+		user.Banner = &[]byte{byte(1)}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(user)
+
+	if err != nil {
+		http.Error(w, "encode error", http.StatusInternalServerError)
+	}
+}
+
 func (rt *_router) UpdateUsername(w http.ResponseWriter, r *http.Request, ctx RequestContext) {
 	id := r.Header.Get("X-Discord-ID")
 
@@ -80,7 +112,7 @@ func (rt *_router) UpdateTrainerSprite(w http.ResponseWriter, r *http.Request, c
 }
 
 func (rt *_router) GetUserBanner(w http.ResponseWriter, r *http.Request, ctx RequestContext) {
-	id := r.Header.Get("X-Discord-ID")
+	id := r.PathValue("id")
 
 	banner, err := rt.db.GetUserBanner(id, r.Context())
 

@@ -1,28 +1,24 @@
 import { useEffect, useState } from "react";
 import { CheckIcon } from "@radix-ui/react-icons";
 import { Avatar, Button } from "~/components/ui";
-import { updateUsername } from "~/lib/backend";
 import { cn, dsAvatar } from "~/lib/utils";
-import { useAuth, type User } from "~/contexts/auth";
-import { useProfileEdit } from "~/contexts/profile-edit";
+import { privateApi } from "~/lib/wrapper";
+import { useAccount } from "~/contexts/account";
+import { useAuth } from "~/contexts/auth";
 import { AccountBadges } from "./badges";
 
-type UserDisplayProps = {
-  user: User;
-};
-
-const UserDisplay: React.FC<UserDisplayProps> = ({ user }) => {
+const UserDisplay = () => {
+  const { user, updateUser, isEditing, stopEdit } = useAccount();
   const [username, setUsername] = useState(user.username);
   const [error, setError] = useState(false);
-  const { token, updateUser } = useAuth();
-  const { editing, stopEditing } = useProfileEdit();
+  const { token, loggedUser, updateLoggedUser } = useAuth();
 
   useEffect(() => {
     // Stopped editing
-    if (!editing) {
+    if (!isEditing && user.username) {
       if (username.length === 0) setUsername(user.username);
     }
-  }, [editing]);
+  }, [isEditing]);
 
   useEffect(() => {
     if (error) {
@@ -31,21 +27,23 @@ const UserDisplay: React.FC<UserDisplayProps> = ({ user }) => {
   }, [error]);
 
   const onUsernameChange = async () => {
-    let err = false;
+    if (!token) return;
 
-    try {
-      await updateUsername(token, username);
-    } catch (e) {
-      console.error(e);
+    let res = await privateApi.updateUsername(token, username);
+
+    if (!res.ok) {
+      console.error(res.error.message);
+
       setError(true);
-      err = true;
+      setUsername(user.username);
+      return;
     }
 
-    if (err) {
-      setUsername(user.username);
-    } else {
-      stopEditing();
-      updateUser({ username });
+    stopEdit();
+    updateUser({ username });
+
+    if (loggedUser?.id === user.id) {
+      updateLoggedUser({ username });
     }
   };
 
@@ -62,7 +60,7 @@ const UserDisplay: React.FC<UserDisplayProps> = ({ user }) => {
           src={dsAvatar(user.id, user.avatar_hash)}
         />
         <div className={cn("mt-2 flex flex-col gap-px")}>
-          {editing ? (
+          {isEditing ? (
             <div className={cn("flex items-center gap-2")}>
               <input
                 className={cn("w-50! text-2xl! font-bold!")}

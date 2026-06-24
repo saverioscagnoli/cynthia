@@ -3,20 +3,21 @@ package api
 import "net/http"
 
 func (rt *_router) Handler() http.Handler {
-	pmux := http.NewServeMux()
+	rt.mux.HandleFunc("GET /api/healthcheck", rt.wrap(rt.Healthcheck))
+	rt.mux.HandleFunc("GET /api/auth/login", rt.wrap(rt.AuthLogin))
+	rt.mux.HandleFunc("GET /api/auth/callback", rt.wrap(rt.AuthCallback))
 
-	rt.mux.HandleFunc("GET /healthcheck", rt.wrap(rt.Healthcheck))
-	rt.mux.HandleFunc("GET /auth/login", rt.wrap(rt.AuthLogin))
-	rt.mux.HandleFunc("GET /auth/callback", rt.wrap(rt.AuthCallback))
+	// public
+	rt.mux.HandleFunc("GET /api/user/{id}", rt.wrap(rt.GetUser))
+	rt.mux.HandleFunc("GET /api/user/{id}/banner", rt.wrap(rt.GetUserBanner))
 
-	rt.mux.Handle("/user/", rt.authMiddleware(pmux))
-
-	pmux.HandleFunc("GET /user/me", rt.wrap(rt.GetLoggedUser))
-	pmux.HandleFunc("PUT /user/username", rt.wrap(rt.UpdateUsername))
-	pmux.HandleFunc("PUT /user/sprite-id", rt.wrap(rt.UpdateTrainerSprite))
-	pmux.HandleFunc("GET /user/banner", rt.wrap(rt.GetUserBanner))
-	pmux.HandleFunc("PUT /user/banner", rt.wrap(rt.UpdateUserBanner))
-	pmux.HandleFunc("DELETE /user/banner", rt.wrap(rt.DeleteUserBanner))
+	// private — registered as exact paths, takes priority over {id}
+	auth := rt.authMiddleware
+	rt.mux.Handle("GET /api/user/me", auth(http.HandlerFunc(rt.wrap(rt.GetLoggedUser))))
+	rt.mux.Handle("PUT /api/user/username", auth(http.HandlerFunc(rt.wrap(rt.UpdateUsername))))
+	rt.mux.Handle("PUT /api/user/sprite-id", auth(http.HandlerFunc(rt.wrap(rt.UpdateTrainerSprite))))
+	rt.mux.Handle("PUT /api/user/banner", auth(http.HandlerFunc(rt.wrap(rt.UpdateUserBanner))))
+	rt.mux.Handle("DELETE /api/user/banner", auth(http.HandlerFunc(rt.wrap(rt.DeleteUserBanner))))
 
 	return rt.mux
 }

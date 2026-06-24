@@ -3,7 +3,7 @@ import { AccountPage } from "~/pages/account";
 import { HomePage } from "~/pages/home";
 import { Topbar } from "~/components/topbar";
 import { cn } from "~/lib/utils";
-import { ProfileEditProvider } from "~/contexts/profile-edit";
+import { AccountProvider } from "./contexts/account";
 
 const App = () => {
   const location = useLocation();
@@ -14,11 +14,11 @@ const App = () => {
         <Routes>
           <Route index element={<HomePage />} />
           <Route
-            path="/account"
+            path="/user/:userId"
             element={
-              <ProfileEditProvider>
+              <AccountProvider>
                 <AccountPage />
-              </ProfileEditProvider>
+              </AccountProvider>
             }
           />
         </Routes>

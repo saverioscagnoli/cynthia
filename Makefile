@@ -1,7 +1,18 @@
+run-webui:
+	cd www && yarn install && yarn dev
+
+build-webui:
+	cd www && yarn install && yarn build
+
 build-app:
 	go build -mod=vendor -o bin/cynthia ./cmd/app
 
 run-app:
+	go build -mod=vendor -o bin/cynthia ./cmd/app
+	./bin/cynthia $(ARGS)
+
+make run-app-prod:
+	$(MAKE) build-webui
 	go build -mod=vendor -o bin/cynthia ./cmd/app
 	./bin/cynthia $(ARGS)
 
