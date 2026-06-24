@@ -75,6 +75,7 @@ const Banner = () => {
         className={cn("flex flex-col gap-4", "absolute top-4 right-4")}
         style={{
           opacity: 0,
+          pointerEvents: isEditing ? "all" : "none",
           animation: isEditing
             ? "fadeIn 0.2s ease forwards"
             : hasEdited

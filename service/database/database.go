@@ -2,8 +2,8 @@ package database
 
 import (
 	"context"
-	"cynthia/cmd/app/models"
 	"cynthia/ds"
+	"cynthia/service/database/models"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -14,6 +14,8 @@ type AppDatabase interface {
 	GetOrInsertUser(user *ds.User, ctx context.Context) (*models.User, error)
 	GetBagItems(userID ds.Snowflake, ctx context.Context) ([]models.BagItem, error)
 	GetUserBanner(userID ds.Snowflake, ctx context.Context) (*[]byte, error)
+
+	GetWinStats(userID ds.Snowflake, ctx context.Context) (*models.WinStats, error)
 
 	UpsertUser(user *ds.User, ctx context.Context) error
 	UpdateUsername(userID ds.Snowflake, username string, ctx context.Context) error

@@ -10,6 +10,7 @@ func (rt *_router) Handler() http.Handler {
 	// public
 	rt.mux.HandleFunc("GET /api/user/{id}", rt.wrap(rt.GetUser))
 	rt.mux.HandleFunc("GET /api/user/{id}/banner", rt.wrap(rt.GetUserBanner))
+	rt.mux.HandleFunc("GET /api/user/{id}/matches", rt.wrap(rt.GetWinStats))
 
 	// private — registered as exact paths, takes priority over {id}
 	auth := rt.authMiddleware

@@ -1,3 +1,4 @@
+import type { MatchStats } from "~/types";
 import type { User } from "~/contexts/auth";
 import { api } from "./request";
 import { authHeader } from "./utils";
@@ -40,7 +41,9 @@ const privateApi = {
 };
 
 const publicApi = {
-  getUser: async (id: string) => await api<User>(`/api/user/${id}`)
+  getUser: async (id: string) => await api<User>(`/api/user/${id}`),
+  getUserStats: async (id: string) =>
+    await api<MatchStats>(`/api/user/${id}/matches`)
 };
 
 export { privateApi, publicApi };

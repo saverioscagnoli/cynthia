@@ -5,6 +5,8 @@
 @import "@radix-ui/colors/slate-dark.css";
 @import "@radix-ui/colors/gray.css";
 @import "@radix-ui/colors/gray-dark.css";
+@import "@radix-ui/colors/plum.css";
+@import "@radix-ui/colors/plum-dark.css";
 
 @custom-variant dark (&:where(.dark, .dark *));
 

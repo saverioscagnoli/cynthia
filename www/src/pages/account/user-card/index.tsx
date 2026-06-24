@@ -3,16 +3,18 @@ import { Card } from "~/components/card";
 import { Button } from "~/components/ui";
 import { cn } from "~/lib/utils";
 import { useAccount } from "~/contexts/account";
+import { useAuth } from "~/contexts/auth";
 import { Banner } from "./banner";
 import { UserInfo } from "./info";
 
 const UserCard = () => {
-  const { isEditing, startEdit, stopEdit, onEditConfirm } = useAccount();
+  const { loggedUser } = useAuth();
+  const { user, isEditing, startEdit, stopEdit, onEditConfirm } = useAccount();
 
   return (
     <Card
       className={cn(
-        "h-100 w-full",
+        "h-110 w-full",
         "relative",
         "overflow-hidden",
         "flex flex-col justify-end"
@@ -30,34 +32,38 @@ const UserCard = () => {
         )}
       >
         <UserInfo />
-        {isEditing ? (
-          <div className={cn("flex gap-4")}>
+        {loggedUser?.id === user.id ? (
+          isEditing ? (
+            <div className={cn("flex gap-4")}>
+              <Button
+                variant="soft"
+                colorScheme="gray"
+                leftIcon={<LuX />}
+                onClick={stopEdit}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="soft"
+                colorScheme="green"
+                leftIcon={<LuCheck />}
+                onClick={onEditConfirm}
+              >
+                Confirm Edit
+              </Button>
+            </div>
+          ) : (
             <Button
               variant="soft"
               colorScheme="gray"
-              leftIcon={<LuX />}
-              onClick={stopEdit}
+              leftIcon={<LuPencil />}
+              onClick={startEdit}
             >
-              Cancel
+              Edit Profile
             </Button>
-            <Button
-              variant="soft"
-              colorScheme="green"
-              leftIcon={<LuCheck />}
-              onClick={onEditConfirm}
-            >
-              Confirm Edit
-            </Button>
-          </div>
+          )
         ) : (
-          <Button
-            variant="soft"
-            colorScheme="gray"
-            leftIcon={<LuPencil />}
-            onClick={startEdit}
-          >
-            Edit Profile
-          </Button>
+          <span></span>
         )}
       </div>
     </Card>

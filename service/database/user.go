@@ -2,8 +2,8 @@ package database
 
 import (
 	"context"
-	"cynthia/cmd/app/models"
 	"cynthia/ds"
+	"cynthia/service/database/models"
 	"cynthia/store"
 	"errors"
 

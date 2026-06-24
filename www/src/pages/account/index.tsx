@@ -3,12 +3,14 @@ import { useParams } from "react-router";
 import { cn } from "~/lib/utils";
 import { publicApi } from "~/lib/wrapper";
 import { useAccount } from "~/contexts/account";
+import { FirstCardRow } from "./first-row";
 import { UserCard } from "./user-card";
 
 const Account = () => {
   return (
     <div className={cn("h-full w-250", "flex flex-col gap-4", "mx-auto my-12")}>
       <UserCard />
+      <FirstCardRow />
     </div>
   );
 };

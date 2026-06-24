@@ -7,10 +7,14 @@ import { AccountProvider } from "./contexts/account";
 
 const App = () => {
   const location = useLocation();
+
   return (
-    <div className={cn("h-screen w-screen")}>
+    <div className={cn("flex h-screen w-screen flex-col")}>
       <Topbar />
-      <div key={location.pathname} className={cn("h-full", "page-transition")}>
+      <div
+        key={location.pathname}
+        className={cn("page-transition flex-1 overflow-y-auto")}
+      >
         <Routes>
           <Route index element={<HomePage />} />
           <Route

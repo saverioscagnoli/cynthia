@@ -20,6 +20,31 @@ func createSchema(ctx context.Context, pool *pgxpool.Pool) error {
             banner_type      TEXT,
             created_at       TIMESTAMP NOT NULL DEFAULT NOW()
         )`,
+		`CREATE TABLE IF NOT EXISTS bag (
+			user_id TEXT    NOT NULL REFERENCES users(id),
+			item_id    INTEGER NOT NULL,
+			quantity   INTEGER NOT NULL DEFAULT 1 CHECK(quantity > 0),
+			PRIMARY KEY (user_id, item_id)
+		)`,
+		`CREATE TABLE IF NOT EXISTS matches (
+    		id            SERIAL    PRIMARY KEY,
+    		player1_id    TEXT      NOT NULL REFERENCES users(id),
+    		player2_id    TEXT      NOT NULL REFERENCES users(id),
+    		winner_id     TEXT      REFERENCES users(id),
+    		type          TEXT      NOT NULL DEFAULT 'single' CHECK(type IN ('single', 'double')),
+    		status        TEXT      NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'active', 'finished', 'cancelled')),
+    		created_at    TIMESTAMP NOT NULL DEFAULT NOW(),
+    		finished_at   TIMESTAMP
+      	)`,
+		`CREATE TABLE IF NOT EXISTS match_summaries (
+           match_id             INTEGER NOT NULL REFERENCES matches(id),
+           user_id              TEXT    NOT NULL REFERENCES users(id),
+           damage_dealt         INTEGER NOT NULL DEFAULT 0,
+           damage_received      INTEGER NOT NULL DEFAULT 0,
+           pokemon_fainted      INTEGER NOT NULL DEFAULT 0,
+           pokemon_lost         INTEGER NOT NULL DEFAULT 0,
+           PRIMARY KEY (match_id, user_id)
+        )`,
 		`CREATE TABLE IF NOT EXISTS owned_pokemons (
 			id           SERIAL    PRIMARY KEY,
 			user_id   TEXT      NOT NULL REFERENCES users(id),
@@ -41,12 +66,6 @@ func createSchema(ctx context.Context, pool *pgxpool.Pool) error {
 			stat_id          INTEGER NOT NULL,
 			value            INTEGER NOT NULL,
 			PRIMARY KEY (owned_pokemon_id, stat_id)
-		)`,
-		`CREATE TABLE IF NOT EXISTS bag (
-			user_id TEXT    NOT NULL REFERENCES users(id),
-			item_id    INTEGER NOT NULL,
-			quantity   INTEGER NOT NULL DEFAULT 1 CHECK(quantity > 0),
-			PRIMARY KEY (user_id, item_id)
 		)`,
 	}
 
