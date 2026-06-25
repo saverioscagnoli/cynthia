@@ -17,6 +17,12 @@ export default defineConfig({
   resolve: {
     tsconfigPaths: true,
   },
+  server: {
+    proxy: {
+      "/api": "http://localhost:3247",
+      //"/api": process.env.BASE_URL,
+    },
+  },
   define: {
     __API_URL__: JSON.stringify(process.env.BASE_URL),
   },

@@ -1,10 +1,10 @@
 package main
 
 import (
+	"camilla/ds"
+	"camilla/service/api"
+	"camilla/service/database"
 	"context"
-	"cynthia/ds"
-	"cynthia/service/api"
-	"cynthia/service/database"
 	"os"
 )
 

@@ -1,7 +1,7 @@
 package ds
 
 import (
-	"cynthia/service/util"
+	"camilla/service/util"
 	"encoding/json"
 )
 
@@ -44,7 +44,7 @@ const (
 )
 
 func (c *ComponentType) UnmarshalJSON(data []byte) error {
-	return util.UnmarshalNumeric(data, c)
+	return unmarshalNumeric(data, c)
 }
 
 func UnmarshalMessageComponent(data []byte) (MessageComponent, error) {
@@ -340,7 +340,7 @@ const (
 )
 
 func (b *ButtonStyle) UnmarshalJSON(data []byte) error {
-	return util.UnmarshalNumeric(data, b)
+	return unmarshalNumeric(data, b)
 }
 
 type Button struct {
@@ -428,7 +428,7 @@ const (
 )
 
 func (t *TextInputStyle) UnmarshalJSON(data []byte) error {
-	return util.UnmarshalNumeric(data, t)
+	return unmarshalNumeric(data, t)
 }
 
 type TextInput struct {

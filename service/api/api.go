@@ -1,7 +1,8 @@
 package api
 
 import (
-	"cynthia/service/database"
+	"camilla/ds"
+	"camilla/service/database"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -9,8 +10,9 @@ import (
 )
 
 type Config struct {
-	Logger   *slog.Logger
-	Database database.AppDatabase
+	Logger             *slog.Logger
+	Database           database.AppDatabase
+	SnowflakeGenerator *ds.SnowflakeGenerator
 }
 
 type Router interface {
@@ -27,6 +29,10 @@ func New(conf Config) (Router, error) {
 		return nil, errors.New("A database is required")
 	}
 
+	if conf.SnowflakeGenerator == nil {
+		return nil, errors.New("A snowflake generator is required")
+	}
+
 	mux := http.NewServeMux()
 
 	frontendURL := os.Getenv("FRONTEND_URL")
@@ -39,11 +45,13 @@ func New(conf Config) (Router, error) {
 		mux:               mux,
 		logger:            conf.Logger,
 		db:                conf.Database,
+		snowflake:         conf.SnowflakeGenerator,
 		frontendURL:       frontendURL,
 		jwtSecret:         jwtSecret,
 		oauth2ClientID:    oauth2ClientID,
 		oauth2Secret:      oauth2Secret,
 		oauth2RedirectURI: oauth2RedirectURI,
+		isProd:            os.Getenv("APP_ENV") == "prod",
 	}, nil
 
 }
@@ -54,9 +62,11 @@ type _router struct {
 	// involved with requests
 	logger            *slog.Logger
 	db                database.AppDatabase
+	snowflake         *ds.SnowflakeGenerator
 	frontendURL       string
 	jwtSecret         string
 	oauth2ClientID    string
 	oauth2Secret      string
 	oauth2RedirectURI string
+	isProd            bool
 }

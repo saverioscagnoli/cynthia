@@ -1,7 +1,7 @@
 package commands
 
 import (
-	"cynthia/service/database"
+	"camilla/service/database"
 )
 
 var db database.AppDatabase

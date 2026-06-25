@@ -1,6 +1,7 @@
 package api
 
 import (
+	"camilla/service/util"
 	"encoding/json"
 	"net/http"
 )
@@ -9,19 +10,19 @@ func (rt *_router) GetWinStats(w http.ResponseWriter, r *http.Request, ctx Reque
 	id := r.PathValue("id")
 
 	if id == "" {
-		http.Error(w, "user not found", http.StatusNotFound)
+		ctx.Error(w, "user not found", http.StatusNotFound, nil)
 		return
 	}
 
 	stats, err := rt.db.GetWinStats(id, r.Context())
 
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		ctx.Error(w, "database error", http.StatusInternalServerError, util.Ptr(err.Error()))
 		return
 	}
 
 	if stats == nil {
-		http.Error(w, "not found", http.StatusNotFound)
+		ctx.Error(w, "not found", http.StatusNotFound, nil)
 		return
 	}
 
@@ -29,7 +30,7 @@ func (rt *_router) GetWinStats(w http.ResponseWriter, r *http.Request, ctx Reque
 	err = json.NewEncoder(w).Encode(stats)
 
 	if err != nil {
-		http.Error(w, "encoding error", http.StatusInternalServerError)
+		ctx.Error(w, "json encoding error", http.StatusInternalServerError, util.Ptr(err.Error()))
 		return
 	}
 }

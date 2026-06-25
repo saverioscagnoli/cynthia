@@ -1,13 +1,13 @@
 package main
 
 import (
+	"camilla/ds"
+	"camilla/pkapi"
+	"camilla/service/api"
+	"camilla/service/commands"
+	"camilla/service/database"
+	"camilla/store"
 	"context"
-	"cynthia/ds"
-	"cynthia/pkapi"
-	"cynthia/service/api"
-	"cynthia/service/commands"
-	"cynthia/service/database"
-	"cynthia/store"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -74,10 +74,11 @@ func SetupDatabase() (database.AppDatabase, error) {
 	return db, nil
 }
 
-func SetupBackend(addr string, port string, db database.AppDatabase) (api.Router, error) {
+func SetupBackend(addr string, port string, db database.AppDatabase, gen *ds.SnowflakeGenerator) (api.Router, error) {
 	router, err := api.New(api.Config{
-		Logger:   slog.Default(),
-		Database: db,
+		Logger:             slog.Default(),
+		Database:           db,
+		SnowflakeGenerator: gen,
 	})
 
 	if err != nil {
@@ -98,9 +99,10 @@ func SetupBackend(addr string, port string, db database.AppDatabase) (api.Router
 
 		if os.Getenv("APP_ENV") == "dev" {
 			c = cors.New(cors.Options{
-				AllowedOrigins: []string{"*"},
-				AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-				AllowedHeaders: []string{"*"},
+				AllowedOrigins:   []string{"http://localhost:5173"},
+				AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+				AllowedHeaders:   []string{"*"},
+				AllowCredentials: true,
 			})
 		} else {
 			c = cors.Default()
@@ -152,9 +154,10 @@ func Init(dbPath string) (*App, error) {
 	slog.Debug("Starting store api...")
 
 	ctx, cancelPkapi := context.WithCancel(context.Background())
+	gen := ds.NewSnowflakeGenerator(1, 0)
 
 	go func() {
-		if err := pkapi.Start(ctx, pkapiPort); err != nil {
+		if err := pkapi.Start(ctx, pkapiPort, gen); err != nil {
 			slog.Error("Store API stopped", "err", err)
 		}
 	}()
@@ -171,7 +174,7 @@ func Init(dbPath string) (*App, error) {
 	addr := os.Getenv("BACKEND_ADDR")
 	port := os.Getenv("BACKEND_PORT")
 
-	rt, err := SetupBackend(addr, port, db)
+	rt, err := SetupBackend(addr, port, db, gen)
 
 	if err != nil {
 		cancelPkapi()

@@ -1,4 +1,4 @@
-module cynthia
+module camilla
 
 go 1.25.0
 

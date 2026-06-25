@@ -1,8 +1,8 @@
 package pkapi
 
 import (
+	"camilla/ds"
 	"context"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -22,17 +22,17 @@ func (rw *responseWriter) Write(b []byte) (int, error) {
 	return n, err
 }
 
-func logRequests(next http.Handler) http.Handler {
+func logRequests(next http.Handler, gen *ds.SnowflakeGenerator) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		rw := &responseWriter{ResponseWriter: w}
 		next.ServeHTTP(rw, r)
 
-		slog.Info(fmt.Sprintf("/%s %s %s", r.Method, r.URL.Path, time.Since(start)))
+		slog.Info("pkapi", "req", gen.Next(), "remote", r.RemoteAddr, "method", r.Method, "path", r.URL.Path, "time", time.Since(start))
 	})
 }
 
-func Start(ctx context.Context, port string) error {
+func Start(ctx context.Context, port string, gen *ds.SnowflakeGenerator) error {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /pokemon/{id}", GetPokemon)
@@ -53,7 +53,7 @@ func Start(ctx context.Context, port string) error {
 
 	server := &http.Server{
 		Addr:    ":" + port,
-		Handler: cors.Default().Handler(logRequests(mux)),
+		Handler: cors.Default().Handler(logRequests(mux, gen)),
 	}
 
 	go func() {

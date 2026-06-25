@@ -2,10 +2,10 @@ package commands
 
 import (
 	"bytes"
+	"camilla/ds"
+	"camilla/service/util"
+	"camilla/store"
 	"context"
-	"cynthia/ds"
-	"cynthia/service/util"
-	"cynthia/store"
 	"encoding/json"
 	"fmt"
 )

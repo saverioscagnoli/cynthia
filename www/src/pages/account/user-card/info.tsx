@@ -10,7 +10,7 @@ import { useAuth } from "~/contexts/auth";
 const UserInfo: React.FC<ComponentProps<"div">> = ({ className, ...props }) => {
   const { user, isEditing, stopEdit, registerOnEditConfirm, updateUser } =
     useAccount();
-  const { updateLoggedUser, token } = useAuth();
+  const { updateLoggedUser } = useAuth();
   const [username, setUsername] = useState<string>(user.username);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -25,11 +25,7 @@ const UserInfo: React.FC<ComponentProps<"div">> = ({ className, ...props }) => {
       updateUser({ username });
       updateLoggedUser({ username });
 
-      if (!token) {
-        return;
-      }
-
-      await privateApi.updateUsername(token, username);
+      await privateApi.updateUsername(username);
     });
   }, [username]);
 

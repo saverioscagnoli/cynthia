@@ -4,12 +4,10 @@ import { Button } from "~/components/ui";
 import { cn } from "~/lib/utils";
 import { privateApi } from "~/lib/wrapper";
 import { useAccount } from "~/contexts/account";
-import { useAuth } from "~/contexts/auth";
 import { useTheme } from "~/contexts/theme";
 
 const Banner = () => {
   const [hasEdited, setHasEdited] = useState<boolean>(false);
-  const { token } = useAuth();
   const { user, updateUser, isEditing, onEditConfirm, registerOnEditConfirm } =
     useAccount();
   const { theme } = useTheme();
@@ -43,13 +41,11 @@ const Banner = () => {
 
   useEffect(() => {
     return registerOnEditConfirm(async () => {
-      if (!token) return;
-
       if (typeRef.current === "clear") {
-        await privateApi.deleteBanner(token);
+        await privateApi.deleteBanner();
         updateUser({ banner: null });
       } else if (typeRef.current === "edit" && fileRef.current) {
-        await privateApi.updateBanner(token, fileRef.current);
+        await privateApi.updateBanner(fileRef.current);
         updateUser({ banner: [1] });
       }
 

@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:16
-    container_name: cynthia-postgres
+    container_name: camilla-postgres
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${DB}

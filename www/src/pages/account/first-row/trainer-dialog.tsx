@@ -12,7 +12,7 @@ import { TrainerSelectList } from "./trainer-list";
 const TrainerSelectDialog: React.FC<{ children: React.ReactNode }> = ({
   children
 }) => {
-  const { token, updateLoggedUser } = useAuth();
+  const { updateLoggedUser } = useAuth();
   const { onEditConfirm, registerOnEditConfirm, updateUser } = useAccount();
   const [open, setOpen] = useState<boolean>(false);
   const [query, setQuery] = useState<string>("");
@@ -33,9 +33,9 @@ const TrainerSelectDialog: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     return registerOnEditConfirm(async () => {
-      if (!token || !selected) return;
+      if (!selected) return;
 
-      await privateApi.updateTrainerSprite(token, selected);
+      await privateApi.updateTrainerSprite(selected);
 
       updateLoggedUser({ sprite_id: selected });
       updateUser({ sprite_id: selected });
@@ -43,7 +43,7 @@ const TrainerSelectDialog: React.FC<{ children: React.ReactNode }> = ({
       setQuery("");
       setSelected(null);
     });
-  }, [selected, token]);
+  }, [selected]);
 
   return (
     <Dialog open={open} onOpenChange={o => setOpen(o)}>

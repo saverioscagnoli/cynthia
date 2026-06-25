@@ -1,7 +1,7 @@
 package main
 
 import (
-	"cynthia/ds"
+	"camilla/ds"
 	"flag"
 	"fmt"
 	"log/slog"

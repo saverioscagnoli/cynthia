@@ -1,7 +1,7 @@
 package main
 
 import (
-	"cynthia/www"
+	"camilla/www"
 	"fmt"
 	"io/fs"
 	"net/http"

@@ -1,7 +1,7 @@
 package ds
 
 import (
-	"cynthia/service/util"
+	"camilla/service/util"
 	"encoding/json"
 	"io"
 	"time"
@@ -338,7 +338,7 @@ const (
 )
 
 func (l *PollLayoutType) UnmarshalJSON(data []byte) error {
-	return util.UnmarshalNumeric(data, l)
+	return unmarshalNumeric(data, l)
 }
 
 type PollMedia struct {
@@ -374,7 +374,7 @@ const (
 )
 
 func (t *StickerFormatType) UnmarshalJSON(data []byte) error {
-	return util.UnmarshalNumeric(data, t)
+	return unmarshalNumeric(data, t)
 }
 
 type StickerItem struct {
@@ -391,7 +391,7 @@ const (
 )
 
 func (t *StickerType) UnmarshalJSON(data []byte) error {
-	return util.UnmarshalNumeric(data, t)
+	return unmarshalNumeric(data, t)
 }
 
 type ReactionType int
@@ -402,7 +402,7 @@ const (
 )
 
 func (r *ReactionType) UnmarshalJSON(b []byte) error {
-	return util.UnmarshalNumeric(b, r)
+	return unmarshalNumeric(b, r)
 }
 
 type AnimationType int
@@ -413,5 +413,5 @@ const (
 )
 
 func (a *AnimationType) UnmarshalJSON(b []byte) error {
-	return util.UnmarshalNumeric(b, a)
+	return unmarshalNumeric(b, a)
 }

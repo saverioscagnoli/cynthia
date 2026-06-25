@@ -1,7 +1,7 @@
 package store
 
 import (
-	"cynthia/service/util"
+	"camilla/service/util"
 	"database/sql"
 	"log/slog"
 )

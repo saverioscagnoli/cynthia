@@ -1,6 +1,6 @@
 package ds
 
-import "cynthia/service/util"
+import "camilla/service/util"
 
 type BaseThemeType int
 
@@ -13,7 +13,7 @@ const (
 )
 
 func (t *BaseThemeType) UnmarshalJSON(data []byte) error {
-	return util.UnmarshalNumeric(data, t)
+	return unmarshalNumeric(data, t)
 }
 
 type MembershipState int
@@ -24,7 +24,7 @@ const (
 )
 
 func (t *MembershipState) UnmarshalJSON(data []byte) error {
-	return util.UnmarshalNumeric(data, t)
+	return unmarshalNumeric(data, t)
 }
 
 type SharedClientTheme struct {
@@ -78,7 +78,7 @@ const (
 )
 
 func (s *StagePrivacyLevel) UnmarshalJSON(b []byte) error {
-	return util.UnmarshalNumeric(b, s)
+	return unmarshalNumeric(b, s)
 }
 
 type StageInstance struct {
@@ -103,7 +103,7 @@ const (
 )
 
 func (a *ActivityType) UnmarshalJSON(b []byte) error {
-	return util.UnmarshalNumeric(b, a)
+	return unmarshalNumeric(b, a)
 }
 
 type ActivityTimestamps struct {
@@ -120,7 +120,7 @@ const (
 )
 
 func (s *StatusDisplayType) UnmarshalJSON(b []byte) error {
-	return util.UnmarshalNumeric(b, s)
+	return unmarshalNumeric(b, s)
 }
 
 type ActivityParty struct {
@@ -159,7 +159,7 @@ const (
 )
 
 func (a *ActivityFlags) UnmarshalJSON(b []byte) error {
-	return util.UnmarshalNumeric(b, a)
+	return unmarshalNumeric(b, a)
 }
 
 type Activity struct {
@@ -192,7 +192,7 @@ const (
 )
 
 func (s *SubscriptionStatus) UnmarshalJSON(b []byte) error {
-	return util.UnmarshalNumeric(b, s)
+	return unmarshalNumeric(b, s)
 }
 
 type Subscription struct {

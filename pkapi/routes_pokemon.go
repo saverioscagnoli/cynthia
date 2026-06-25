@@ -1,7 +1,7 @@
 package pkapi
 
 import (
-	"cynthia/store"
+	"camilla/store"
 	"encoding/json"
 	"net/http"
 	"strconv"

@@ -1,28 +1,27 @@
 package database
 
 import (
+	"camilla/ds"
+	"camilla/service/database/models"
 	"context"
-	"cynthia/ds"
-	"cynthia/service/database/models"
 )
 
 func (db *dbimpl) GetWinStats(userID ds.Snowflake, ctx context.Context) (*models.WinStats, error) {
 	const query = `
 		SELECT
-			COUNT(*) FILTER (WHERE winner_id = $1)                                                AS wins,
+			COUNT(*) FILTER (WHERE winner_id = $1)                          AS wins,
 			COUNT(*) FILTER (WHERE (player1_id = $1 OR player2_id = $1)
 				AND winner_id IS NOT NULL AND winner_id != $1
-				AND status = 'finished')                                                          AS losses,
+				AND status = 'finished')                                     AS losses,
 			COUNT(*) FILTER (WHERE (player1_id = $1 OR player2_id = $1)
 				AND winner_id IS NULL
-				AND status = 'finished')                                                          AS draws,
-			COUNT(*) FILTER (WHERE winner_id = $1 AND type = 'single')                           AS single_wins,
-			COUNT(*) FILTER (WHERE winner_id = $1 AND type = 'double')                           AS double_wins
+				AND status = 'finished')                                     AS draws,
+			COUNT(*) FILTER (WHERE winner_id = $1 AND type = 'single')      AS single_wins,
+			COUNT(*) FILTER (WHERE winner_id = $1 AND type = 'double')      AS double_wins
 		FROM matches
 		WHERE (player1_id = $1 OR player2_id = $1)
 		  AND status = 'finished'
 	`
-
 	var stats models.WinStats
 
 	err := db.Pool.QueryRow(ctx, query, userID).Scan(
@@ -43,16 +42,13 @@ func (db *dbimpl) GetWinStats(userID ds.Snowflake, ctx context.Context) (*models
 		stats.Winrate = float32(stats.Wins) / float32(total)
 	}
 
-	// streak: walk matches ordered by date, newest first
-	streakQuery := `
+	rows, err := db.Pool.Query(ctx, `
 		SELECT winner_id
 		FROM matches
 		WHERE (player1_id = $1 OR player2_id = $1)
 		  AND status = 'finished'
-		ORDER BY finished_at DESC
-	`
-
-	rows, err := db.Pool.Query(ctx, streakQuery, userID)
+		ORDER BY finished_at DESC NULLS LAST
+	`, userID)
 
 	if err != nil {
 		return nil, err
@@ -60,8 +56,7 @@ func (db *dbimpl) GetWinStats(userID ds.Snowflake, ctx context.Context) (*models
 
 	defer rows.Close()
 
-	current := 0
-	best := 0
+	current, best := 0, 0
 
 	for rows.Next() {
 		var winnerID *string
@@ -76,9 +71,6 @@ func (db *dbimpl) GetWinStats(userID ds.Snowflake, ctx context.Context) (*models
 				best = current
 			}
 		} else {
-			if current > best {
-				best = current
-			}
 			current = 0
 		}
 	}

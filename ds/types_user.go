@@ -1,7 +1,7 @@
 package ds
 
 import (
-	"cynthia/service/util"
+	"camilla/service/util"
 	"strconv"
 )
 
@@ -71,7 +71,7 @@ const (
 )
 
 func (e *EntitlementType) UnmarshalJSON(b []byte) error {
-	return util.UnmarshalNumeric(b, e)
+	return unmarshalNumeric(b, e)
 }
 
 type Nameplate struct {

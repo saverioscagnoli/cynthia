@@ -27,7 +27,6 @@ const UserCard = () => {
           "flex justify-between",
           "px-12 py-4",
           "bg-(--slate-3) dark:bg-(--slate-2)",
-          "rounded-b-2xl",
           "z-10"
         )}
       >

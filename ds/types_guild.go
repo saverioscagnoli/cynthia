@@ -1,6 +1,6 @@
 package ds
 
-import "cynthia/service/util"
+import "camilla/service/util"
 
 type Guild struct {
 	ID                        Snowflake                  `json:"id"`
@@ -58,7 +58,7 @@ const (
 )
 
 func (e *GuildAgeRestrictionLevel) UnmarshalJSON(b []byte) error {
-	return util.UnmarshalNumeric(b, e)
+	return unmarshalNumeric(b, e)
 }
 
 type GuildFeature string
@@ -129,7 +129,7 @@ const (
 )
 
 func (e *ExplicitContentFilterLevel) UnmarshalJSON(b []byte) error {
-	return util.UnmarshalNumeric(b, e)
+	return unmarshalNumeric(b, e)
 }
 
 type IncidentsData struct {
@@ -147,7 +147,7 @@ const (
 )
 
 func (m *MfaLevel) UnmarshalJSON(data []byte) error {
-	return util.UnmarshalNumeric(data, m)
+	return unmarshalNumeric(data, m)
 }
 
 type PremiumTier int
@@ -160,7 +160,7 @@ const (
 )
 
 func (t *PremiumTier) UnmarshalJSON(data []byte) error {
-	return util.UnmarshalNumeric(data, t)
+	return unmarshalNumeric(data, t)
 }
 
 type Role struct {
@@ -211,7 +211,7 @@ const (
 )
 
 func (t *VerificationLevel) UnmarshalJSON(data []byte) error {
-	return util.UnmarshalNumeric(data, t)
+	return unmarshalNumeric(data, t)
 }
 
 type WelcomeScreen struct {
@@ -303,7 +303,7 @@ const (
 )
 
 func (g *GuildScheduledEventPrivacyLevel) UnmarshalJSON(b []byte) error {
-	return util.UnmarshalNumeric(b, g)
+	return unmarshalNumeric(b, g)
 }
 
 type GuildScheduledEventStatus int
@@ -316,7 +316,7 @@ const (
 )
 
 func (g *GuildScheduledEventStatus) UnmarshalJSON(b []byte) error {
-	return util.UnmarshalNumeric(b, g)
+	return unmarshalNumeric(b, g)
 }
 
 type GuildScheduledEventEntityType int
@@ -328,7 +328,7 @@ const (
 )
 
 func (g *GuildScheduledEventEntityType) UnmarshalJSON(b []byte) error {
-	return util.UnmarshalNumeric(b, g)
+	return unmarshalNumeric(b, g)
 }
 
 type GuildScheduledEventEntityMetadata struct {
@@ -345,7 +345,7 @@ const (
 )
 
 func (g *GuildScheduledEventRecurrenceRuleFrequency) UnmarshalJSON(b []byte) error {
-	return util.UnmarshalNumeric(b, g)
+	return unmarshalNumeric(b, g)
 }
 
 type GuildScheduledEventRecurrenceRuleWeekday int
@@ -361,7 +361,7 @@ const (
 )
 
 func (g *GuildScheduledEventRecurrenceRuleWeekday) UnmarshalJSON(b []byte) error {
-	return util.UnmarshalNumeric(b, g)
+	return unmarshalNumeric(b, g)
 }
 
 type GuildScheduledEventRecurrenceRuleNWeekday struct {
@@ -387,7 +387,7 @@ const (
 )
 
 func (g *GuildScheduledEventRecurrenceRuleMonth) UnmarshalJSON(b []byte) error {
-	return util.UnmarshalNumeric(b, g)
+	return unmarshalNumeric(b, g)
 }
 
 type GuildScheduledEventRecurrenceRule struct {
@@ -534,7 +534,7 @@ const (
 )
 
 func (a *AuditLogEvent) UnmarshalJSON(b []byte) error {
-	return util.UnmarshalNumeric(b, a)
+	return unmarshalNumeric(b, a)
 }
 
 type OptionalAuditEntryInfo struct {
@@ -584,7 +584,7 @@ const (
 )
 
 func (i *IntegrationExpireBehavior) UnmarshalJSON(b []byte) error {
-	return util.UnmarshalNumeric(b, i)
+	return unmarshalNumeric(b, i)
 }
 
 type IntegrationAccount struct {
@@ -619,5 +619,5 @@ const (
 )
 
 func (i *InviteTarget) UnmarshalJSON(b []byte) error {
-	return util.UnmarshalNumeric(b, i)
+	return unmarshalNumeric(b, i)
 }

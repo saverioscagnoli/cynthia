@@ -3,7 +3,7 @@
 package main
 
 import (
-	"cynthia/assets"
+	"camilla/assets"
 	"database/sql"
 	"encoding/json"
 	"flag"

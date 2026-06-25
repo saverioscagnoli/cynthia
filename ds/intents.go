@@ -1,7 +1,5 @@
 package ds
 
-import "cynthia/service/util"
-
 type Intent uint64
 
 const (
@@ -37,7 +35,7 @@ const (
 )
 
 func (i *Intent) UnmarshalJSON(b []byte) error {
-	return util.UnmarshalNumeric(b, i)
+	return unmarshalNumeric(b, i)
 }
 
 func (i Intent) Has(intent Intent) bool {

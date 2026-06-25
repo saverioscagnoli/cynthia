@@ -1,26 +1,25 @@
 package api
 
 import (
-	"cynthia/constants"
-	"cynthia/ds"
+	"camilla/constants"
+	"camilla/service/util"
 	"encoding/json"
 	"io"
 	"net/http"
 )
 
 func (rt *_router) GetLoggedUser(w http.ResponseWriter, r *http.Request, ctx RequestContext) {
-	id := r.Header.Get("X-Discord-ID")
-	user, err := rt.db.GetUser(id, r.Context())
+	claims := ctx.Claims(r)
+	user, err := rt.db.GetUser(claims.UserID, r.Context())
 
 	if user == nil && err == nil {
-		ctx.Logger.Error("User not found in database", "id", id)
-		http.Error(w, "not found", http.StatusNotFound)
+		ctx.Error(w, "user not found", http.StatusNotFound, nil)
 		return
 	}
 
 	if err != nil {
 		ctx.Logger.Error("Error retrieving user from database", "err", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		ctx.Error(w, "error retrieving user from database", http.StatusInternalServerError, util.Ptr(err.Error()))
 		return
 	}
 
@@ -28,28 +27,22 @@ func (rt *_router) GetLoggedUser(w http.ResponseWriter, r *http.Request, ctx Req
 	err = json.NewEncoder(w).Encode(user)
 
 	if err != nil {
-		ctx.Logger.Error("Json decoding error in user retrieval", "err", err)
-		http.Error(w, "json encoding error", http.StatusInternalServerError)
+		ctx.Error(w, "json encoding error", http.StatusInternalServerError, util.Ptr(err.Error()))
 	}
 }
 
 func (rt *_router) GetUser(w http.ResponseWriter, r *http.Request, ctx RequestContext) {
 	id := r.PathValue("id")
 
-	if id == "" {
-		http.Error(w, "user not found", http.StatusNotFound)
-		return
-	}
-
 	user, err := rt.db.GetUser(id, r.Context())
 
 	if err != nil {
-		http.Error(w, "database error", http.StatusInternalServerError)
+		ctx.Error(w, "database error", http.StatusInternalServerError, util.Ptr(err.Error()))
 		return
 	}
 
 	if user == nil {
-		http.Error(w, "user not found", http.StatusNotFound)
+		ctx.Error(w, "user not found", http.StatusNotFound, nil)
 		return
 	}
 
@@ -61,28 +54,26 @@ func (rt *_router) GetUser(w http.ResponseWriter, r *http.Request, ctx RequestCo
 	err = json.NewEncoder(w).Encode(user)
 
 	if err != nil {
-		http.Error(w, "encode error", http.StatusInternalServerError)
+		ctx.Error(w, "json encoding error", http.StatusInternalServerError, util.Ptr(err.Error()))
 	}
 }
 
 func (rt *_router) UpdateUsername(w http.ResponseWriter, r *http.Request, ctx RequestContext) {
-	id := r.Header.Get("X-Discord-ID")
+	claims := ctx.Claims(r)
 
 	var body struct{ Username string }
 
 	err := json.NewDecoder(r.Body).Decode(&body)
 
 	if err != nil {
-		ctx.Logger.Error("Failed to update username", "err", err)
-		http.Error(w, "bad request", http.StatusBadRequest)
+		ctx.Error(w, "bad request", http.StatusBadRequest, nil)
 		return
 	}
 
-	err = rt.db.UpdateUsername(id, body.Username, r.Context())
+	err = rt.db.UpdateUsername(claims.UserID, body.Username, r.Context())
 
 	if err != nil {
-		ctx.Logger.Error("Failed to update username", "err", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		ctx.Error(w, "internal server error", http.StatusInternalServerError, nil)
 		return
 	}
 
@@ -90,21 +81,19 @@ func (rt *_router) UpdateUsername(w http.ResponseWriter, r *http.Request, ctx Re
 }
 
 func (rt *_router) UpdateTrainerSprite(w http.ResponseWriter, r *http.Request, ctx RequestContext) {
-	id := r.Header.Get("X-Discord-ID")
+	claims := ctx.Claims(r)
 
 	var body struct {
 		ID int `json:"id"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		ctx.Logger.Error("Failed to update trainer sprite id", "err", err)
-		http.Error(w, "bad request", http.StatusBadRequest)
+		ctx.Error(w, "bad request", http.StatusBadRequest, nil)
 		return
 	}
 
-	if err := rt.db.UpdateTrainerSprite(id, &body.ID, r.Context()); err != nil {
-		ctx.Logger.Error("Failed to update trainer sprite id", "err", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+	if err := rt.db.UpdateTrainerSprite(claims.UserID, &body.ID, r.Context()); err != nil {
+		ctx.Error(w, "database error", http.StatusInternalServerError, util.Ptr(err.Error()))
 		return
 	}
 
@@ -117,8 +106,7 @@ func (rt *_router) GetUserBanner(w http.ResponseWriter, r *http.Request, ctx Req
 	banner, err := rt.db.GetUserBanner(id, r.Context())
 
 	if err != nil {
-		ctx.Logger.Error("Failed to get user banner", "err", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		ctx.Error(w, "database error", http.StatusInternalServerError, util.Ptr(err.Error()))
 		return
 	}
 
@@ -132,19 +120,19 @@ func (rt *_router) GetUserBanner(w http.ResponseWriter, r *http.Request, ctx Req
 }
 
 func (rt *_router) UpdateUserBanner(w http.ResponseWriter, r *http.Request, ctx RequestContext) {
-	id := r.Header.Get("X-Discord-ID")
+	claims := ctx.Claims(r)
 
 	r.Body = http.MaxBytesReader(w, r.Body, constants.MaxUserBannerSize)
 
 	if err := r.ParseMultipartForm(constants.MaxUserBannerSize); err != nil {
-		http.Error(w, "banner must be under 5MB", http.StatusRequestEntityTooLarge)
+		ctx.Error(w, "banner is over 5MB", http.StatusRequestEntityTooLarge, nil)
 		return
 	}
 
 	file, _, err := r.FormFile("banner")
 
 	if err != nil {
-		http.Error(w, "missing banner", http.StatusBadRequest)
+		ctx.Error(w, "missing banner", http.StatusBadRequest, nil)
 		return
 	}
 
@@ -153,20 +141,19 @@ func (rt *_router) UpdateUserBanner(w http.ResponseWriter, r *http.Request, ctx 
 	data, err := io.ReadAll(file)
 
 	if err != nil {
-		http.Error(w, "failed to read file", http.StatusInternalServerError)
+		ctx.Error(w, "internal error", http.StatusInternalServerError, util.Ptr(err.Error()))
 		return
 	}
 
 	contentType := http.DetectContentType(data)
 
-	if contentType != "image/jpeg" && contentType != "image/png" && contentType != "image/gif" {
-		http.Error(w, "banner must be an image", http.StatusBadRequest)
+	if contentType != "image/jpeg" && contentType != "image/png" && contentType != "image/gif" && contentType != "image/webp" {
+		ctx.Error(w, "banner must be an image", http.StatusBadRequest, nil)
 		return
 	}
 
-	if err := rt.db.UpdateUserBanner(ds.Snowflake(id), &data, &contentType, r.Context()); err != nil {
-		ctx.Logger.Error("Failed to update banner", "err", err)
-		http.Error(w, "db error", http.StatusInternalServerError)
+	if err := rt.db.UpdateUserBanner(claims.UserID, &data, &contentType, r.Context()); err != nil {
+		ctx.Error(w, "database error", http.StatusInternalServerError, util.Ptr(err.Error()))
 		return
 	}
 
@@ -174,11 +161,10 @@ func (rt *_router) UpdateUserBanner(w http.ResponseWriter, r *http.Request, ctx 
 }
 
 func (rt *_router) DeleteUserBanner(w http.ResponseWriter, r *http.Request, ctx RequestContext) {
-	id := r.Header.Get("X-Discord-ID")
+	claims := ctx.Claims(r)
 
-	if err := rt.db.UpdateUserBanner(ds.Snowflake(id), nil, nil, r.Context()); err != nil {
-		ctx.Logger.Error("Failed to delete banner", "err", err)
-		http.Error(w, "db error", http.StatusInternalServerError)
+	if err := rt.db.UpdateUserBanner(claims.UserID, nil, nil, r.Context()); err != nil {
+		ctx.Error(w, "database error", http.StatusInternalServerError, util.Ptr(err.Error()))
 		return
 	}
 

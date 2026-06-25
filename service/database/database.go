@@ -1,9 +1,9 @@
 package database
 
 import (
+	"camilla/ds"
+	"camilla/service/database/models"
 	"context"
-	"cynthia/ds"
-	"cynthia/service/database/models"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )

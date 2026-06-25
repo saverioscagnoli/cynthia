@@ -25,10 +25,8 @@ type User = {
 type AuthContextT = {
   loggedUser: User | null;
   updateLoggedUser: (u: Partial<User>) => void;
-  token: string | null;
   logout: () => void;
   logged: boolean;
-  authFetch: (input: string, init?: RequestInit) => Promise<Response>;
 };
 
 const AuthContext = createContext<AuthContextT | null>(null);
@@ -37,61 +35,28 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children
 }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(
-    localStorage.getItem("token")
-  );
 
-  useEffect(() => {
-    let params = new URLSearchParams(window.location.search);
-    let t = params.get("token");
-
-    if (t) {
-      localStorage.setItem("token", t);
-      setToken(t);
-      window.history.replaceState({}, "", window.location.pathname);
-    }
-  }, []);
-
-  const logout = () => {
-    localStorage.removeItem("token");
-    setToken(null);
+  const logout = async () => {
+    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
     setUser(null);
   };
 
   const fetchUser = async () => {
-    let result = await privateApi.getLoggedUser(token!);
-
+    const result = await privateApi.getLoggedUser();
     if (!result.ok) {
       if (result.error.status === 401) {
-        logout();
+        setUser(null);
         return;
       }
-
       console.error(result.error);
       return;
     }
-
     setUser(result.data);
   };
 
   useEffect(() => {
-    if (!token) {
-      setUser(null);
-      return;
-    }
-
     fetchUser();
-  }, [token]);
-
-  const authFetch = (input: string, init?: RequestInit) => {
-    return fetch(input, {
-      ...init,
-      headers: {
-        ...init?.headers,
-        Authorization: `Bearer ${token}`
-      }
-    });
-  };
+  }, []);
 
   const updateUser = (u: Partial<User>) => {
     setUser(prev => (prev ? { ...prev, ...u } : null));
@@ -102,10 +67,8 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       value={{
         loggedUser: user,
         updateLoggedUser: updateUser,
-        token,
         logout,
-        logged: user !== null,
-        authFetch
+        logged: user !== null
       }}
     >
       {children}
@@ -115,9 +78,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
 const useAuth = () => {
   const ctx = useContext(AuthContext);
-
   if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
-
   return ctx;
 };
 

@@ -1,6 +1,6 @@
 package ds
 
-import "cynthia/service/util"
+import "camilla/service/util"
 
 type Application struct {
 	ID                                Snowflake                           `json:"id"`
@@ -52,7 +52,7 @@ const (
 )
 
 func (a *ApplicationFlags) UnmarshalJSON(b []byte) error {
-	return util.UnmarshalNumeric(b, a)
+	return unmarshalNumeric(b, a)
 }
 
 type ApplicationEventWebhookStatus int
@@ -64,7 +64,7 @@ const (
 )
 
 func (a *ApplicationEventWebhookStatus) UnmarshalJSON(b []byte) error {
-	return util.UnmarshalNumeric(b, a)
+	return unmarshalNumeric(b, a)
 }
 
 type ApplicationIntegrationType int
@@ -75,7 +75,7 @@ const (
 )
 
 func (a *ApplicationIntegrationType) UnmarshalJSON(b []byte) error {
-	return util.UnmarshalNumeric(b, a)
+	return unmarshalNumeric(b, a)
 }
 
 type InstallParams struct {

@@ -1,7 +1,5 @@
 package ds
 
-import "cynthia/service/util"
-
 type Channel struct {
 	ID                            Snowflake        `json:"id"`
 	Type                          ChannelType      `json:"type"`
@@ -66,7 +64,7 @@ const (
 )
 
 func (c *ChannelType) UnmarshalJSON(b []byte) error {
-	return util.UnmarshalNumeric(b, c)
+	return unmarshalNumeric(b, c)
 }
 
 type ForumTag struct {
@@ -96,7 +94,7 @@ const (
 )
 
 func (t *SystemChannelFlags) UnmarshalJSON(data []byte) error {
-	return util.UnmarshalNumeric(data, t)
+	return unmarshalNumeric(data, t)
 }
 
 type ThreadMetadata struct {

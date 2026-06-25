@@ -1,7 +1,7 @@
 package commands
 
 import (
-	"cynthia/ds"
+	"camilla/ds"
 	"fmt"
 )
 

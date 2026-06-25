@@ -6,6 +6,7 @@ func (rt *_router) Handler() http.Handler {
 	rt.mux.HandleFunc("GET /api/healthcheck", rt.wrap(rt.Healthcheck))
 	rt.mux.HandleFunc("GET /api/auth/login", rt.wrap(rt.AuthLogin))
 	rt.mux.HandleFunc("GET /api/auth/callback", rt.wrap(rt.AuthCallback))
+	rt.mux.HandleFunc("POST /api/auth/logout", rt.wrap(rt.AuthLogout))
 
 	// public
 	rt.mux.HandleFunc("GET /api/user/{id}", rt.wrap(rt.GetUser))

@@ -9,8 +9,4 @@ function dsAvatar(id: string, hash: string) {
   return `https://cdn.discordapp.com/avatars/${id}/${hash}.png`;
 }
 
-function authHeader(token: string): { Authorization: string } {
-  return { Authorization: `Bearer ${token}` };
-}
-
-export { cn, dsAvatar, authHeader };
+export { cn, dsAvatar };

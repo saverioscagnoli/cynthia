@@ -1,7 +1,6 @@
 package ds
 
 import (
-	"cynthia/service/util"
 	"fmt"
 )
 
@@ -51,7 +50,7 @@ func (op Op) String() string {
 }
 
 func (o *Op) UnmarshalJSON(b []byte) error {
-	return util.UnmarshalNumeric(b, o)
+	return unmarshalNumeric(b, o)
 }
 
 type Payload[T any] struct {

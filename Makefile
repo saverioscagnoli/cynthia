@@ -5,16 +5,17 @@ build-webui:
 	cd www && yarn install && yarn build
 
 build-app:
-	go build -mod=vendor -o bin/cynthia ./cmd/app
+	go mod vendor
+	go build -mod=vendor -o bin/camilla ./cmd/app
 
 run-app:
-	go build -mod=vendor -o bin/cynthia ./cmd/app
-	./bin/cynthia $(ARGS)
+	go mod vendor
+	go build -mod=vendor -o bin/camilla ./cmd/app
+	./bin/camilla $(ARGS)
 
 make run-app-prod:
 	$(MAKE) build-webui
-	go build -mod=vendor -o bin/cynthia ./cmd/app
-	./bin/cynthia $(ARGS)
+	$(MAKE) run-app
 
 run-seed:
 	go run -mod=vendor ./store/seed.go

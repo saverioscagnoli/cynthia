@@ -1,10 +1,10 @@
 package database
 
 import (
+	"camilla/ds"
+	"camilla/service/database/models"
+	"camilla/store"
 	"context"
-	"cynthia/ds"
-	"cynthia/service/database/models"
-	"cynthia/store"
 	"errors"
 
 	"github.com/jackc/pgx/v5"
@@ -12,18 +12,20 @@ import (
 
 func (db *dbimpl) GetUser(id ds.Snowflake, ctx context.Context) (*models.User, error) {
 	const query = `
-        SELECT
-            id,
-            username,
-            discord_username,
-            avatar_hash,
-            money,
-            sprite_id,
-            banner,
-            created_at
-        FROM users
-        WHERE id = $1
-    `
+		SELECT
+			u.id,
+			u.username,
+			u.discord_username,
+			u.avatar_hash,
+			u.money,
+			u.sprite_id,
+			ub.banner,
+			u.created_at
+		FROM users u
+		LEFT JOIN user_banners ub ON ub.user_id = u.id
+		WHERE u.id = $1
+	`
+
 	var user models.User
 
 	err := db.Pool.QueryRow(ctx, query, id).Scan(
@@ -41,7 +43,6 @@ func (db *dbimpl) GetUser(id ds.Snowflake, ctx context.Context) (*models.User, e
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
-
 		return nil, err
 	}
 
@@ -59,8 +60,8 @@ func (db *dbimpl) GetUser(id ds.Snowflake, ctx context.Context) (*models.User, e
 func (db *dbimpl) GetOrInsertUser(user *ds.User, ctx context.Context) (*models.User, error) {
 	_, err := db.Pool.Exec(ctx,
 		`INSERT INTO users (id, username, discord_username, avatar_hash)
-        VALUES ($1, $2, $2, $3)
-        ON CONFLICT (id) DO NOTHING`,
+		VALUES ($1, $2, $2, $3)
+		ON CONFLICT (id) DO NOTHING`,
 		user.ID, user.Username, user.Avatar,
 	)
 
@@ -73,8 +74,8 @@ func (db *dbimpl) GetOrInsertUser(user *ds.User, ctx context.Context) (*models.U
 
 func (db *dbimpl) GetBagItems(userID ds.Snowflake, ctx context.Context) ([]models.BagItem, error) {
 	rows, err := db.Pool.Query(ctx, `
-        SELECT item_id, quantity FROM bag WHERE user_id = $1
-    `, userID)
+		SELECT item_id, quantity FROM user_items WHERE user_id = $1
+	`, userID)
 
 	if err != nil {
 		return nil, err
@@ -112,33 +113,28 @@ func (db *dbimpl) GetBagItems(userID ds.Snowflake, ctx context.Context) ([]model
 
 func (db *dbimpl) GetUserBanner(userID ds.Snowflake, ctx context.Context) (*[]byte, error) {
 	var banner []byte
-
 	err := db.Pool.QueryRow(ctx, `
-        SELECT banner FROM users WHERE id = $1
-    `, userID).Scan(&banner)
-
+		SELECT banner FROM user_banners WHERE user_id = $1
+	`, userID).Scan(&banner)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
-
 		return nil, err
 	}
-
 	return &banner, nil
 }
 
 func (db *dbimpl) UpsertUser(user *ds.User, ctx context.Context) error {
 	_, err := db.Pool.Exec(ctx,
 		`INSERT INTO users (id, username, discord_username, avatar_hash)
-        VALUES ($1, $2, $2, $3)
-        ON CONFLICT (id) DO UPDATE
-        SET username = EXCLUDED.username,
-            discord_username = EXCLUDED.discord_username,
-            avatar_hash = EXCLUDED.avatar_hash`,
+		VALUES ($1, $2, $2, $3)
+		ON CONFLICT (id) DO UPDATE
+		SET username = EXCLUDED.username,
+			discord_username = EXCLUDED.discord_username,
+			avatar_hash = EXCLUDED.avatar_hash`,
 		user.ID, user.Username, user.Avatar,
 	)
-
 	return err
 }
 
@@ -147,7 +143,6 @@ func (db *dbimpl) UpdateUsername(userID ds.Snowflake, username string, ctx conte
 		`UPDATE users SET username = $1 WHERE id = $2`,
 		username, userID,
 	)
-
 	return err
 }
 
@@ -156,15 +151,17 @@ func (db *dbimpl) UpdateTrainerSprite(userID ds.Snowflake, spriteID *int, ctx co
 		`UPDATE users SET sprite_id = $1 WHERE id = $2`,
 		spriteID, userID,
 	)
-
 	return err
 }
 
 func (db *dbimpl) UpdateUserBanner(userID ds.Snowflake, banner *[]byte, contentType *string, ctx context.Context) error {
 	_, err := db.Pool.Exec(ctx,
-		`UPDATE users SET banner = $1, banner_type = $2 WHERE id = $3`,
-		banner, contentType, userID,
+		`INSERT INTO user_banners (user_id, banner, banner_type)
+		VALUES ($1, $2, $3)
+		ON CONFLICT (user_id) DO UPDATE
+		SET banner = EXCLUDED.banner,
+			banner_type = EXCLUDED.banner_type`,
+		userID, banner, contentType,
 	)
-
 	return err
 }

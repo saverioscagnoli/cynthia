@@ -1,7 +1,6 @@
 package ds
 
 import (
-	"cynthia/service/util"
 	"encoding/json"
 	"fmt"
 )
@@ -110,7 +109,7 @@ const (
 )
 
 func (t *InteractionCallbackType) UnmarshalJSON(data []byte) error {
-	return util.UnmarshalNumeric(data, t)
+	return unmarshalNumeric(data, t)
 }
 
 type InteractionContextType int
@@ -122,7 +121,7 @@ const (
 )
 
 func (e *InteractionContextType) UnmarshalJSON(b []byte) error {
-	return util.UnmarshalNumeric(b, e)
+	return unmarshalNumeric(b, e)
 }
 
 type InteractionResponse struct {
@@ -141,7 +140,7 @@ const (
 )
 
 func (i *InteractionType) UnmarshalJSON(data []byte) error {
-	return util.UnmarshalNumeric(data, i)
+	return unmarshalNumeric(data, i)
 }
 
 type ApplicationCommandData struct {
@@ -194,7 +193,7 @@ const (
 )
 
 func (a *ApplicationCommandOptionType) UnmarshalJSON(b []byte) error {
-	return util.UnmarshalNumeric(b, a)
+	return unmarshalNumeric(b, a)
 }
 
 type ApplicationCommandType int
@@ -207,7 +206,7 @@ const (
 )
 
 func (a *ApplicationCommandType) UnmarshalJSON(b []byte) error {
-	return util.UnmarshalNumeric(b, a)
+	return unmarshalNumeric(b, a)
 }
 
 type ApplicationCommandInteractionDataOption struct {

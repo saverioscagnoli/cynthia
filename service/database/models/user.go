@@ -1,7 +1,7 @@
 package models
 
 import (
-	"cynthia/ds"
+	"camilla/ds"
 	"time"
 )
 

@@ -1,8 +1,8 @@
 package pkapi
 
 import (
-	"cynthia/assets"
-	"cynthia/store"
+	"camilla/assets"
+	"camilla/store"
 	"net/http"
 	"strconv"
 )
