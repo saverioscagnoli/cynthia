@@ -123,6 +123,7 @@ func SetupDiscordCommands(app *App, testGuild ds.Snowflake) (bool, error) {
 
 	app.ds.AddCommand(commands.Ping{})
 	app.ds.AddCommand(commands.Trainer{})
+	app.ds.AddCommand(commands.Encounter{})
 
 	if testGuild != "" {
 		err := app.ds.RegisterGuildCommands(testGuild)

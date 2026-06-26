@@ -1,7 +1,6 @@
 package store
 
 import (
-	"camilla/service/util"
 	"database/sql"
 	"log/slog"
 )
@@ -9,6 +8,7 @@ import (
 var (
 	Pokemons         map[int]*Pokemon        = map[int]*Pokemon{}
 	PokemonSpriteMap map[int]*PokemonSprites = map[int]*PokemonSprites{}
+	PokemonIDs       []int                   = []int{}
 	Types            map[int]*Type           = map[int]*Type{}
 	TypeSprites      map[int]*[]byte         = map[int]*[]byte{}
 	Moves            map[int]*Move           = map[int]*Move{}
@@ -194,6 +194,7 @@ func loadPokemons(db *sql.DB) {
 
 		p.Species.Color = PokemonColor(color)
 		Pokemons[p.ID] = p
+		PokemonIDs = append(PokemonIDs, p.ID)
 	}
 
 	loadPokemonSprites(db)
@@ -217,8 +218,8 @@ func loadPokemonSprites(db *sql.DB) {
 
 	for rows.Next() {
 		var id int
-		var front, frontShiny, back, backShiny []byte
-		var frontFemale, frontShinyFemale, backFemale, backShinyFemale []byte
+		var front, frontShiny, back, backShiny *[]byte
+		var frontFemale, frontShinyFemale, backFemale, backShinyFemale *[]byte
 
 		err := rows.Scan(
 			&id,
@@ -231,14 +232,14 @@ func loadPokemonSprites(db *sql.DB) {
 		}
 
 		PokemonSpriteMap[id] = &PokemonSprites{
-			Front:            util.Ptr(front),
-			FrontShiny:       util.Ptr(frontShiny),
-			Back:             util.Ptr(back),
-			BackShiny:        util.Ptr(backShiny),
-			FrontFemale:      util.Ptr(frontFemale),
-			FrontShinyFemale: util.Ptr(frontShinyFemale),
-			BackFemale:       util.Ptr(backFemale),
-			BackShinyFemale:  util.Ptr(backShinyFemale),
+			Front:            front,
+			FrontShiny:       frontShiny,
+			Back:             back,
+			BackShiny:        backShiny,
+			FrontFemale:      frontFemale,
+			FrontShinyFemale: frontShinyFemale,
+			BackFemale:       backFemale,
+			BackShinyFemale:  backShinyFemale,
 		}
 	}
 }
