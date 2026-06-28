@@ -3,6 +3,7 @@ package commands
 import (
 	"bytes"
 	"camilla/ds"
+	"camilla/service/database"
 	"camilla/service/util"
 	"camilla/store"
 	"context"
@@ -10,7 +11,9 @@ import (
 	"fmt"
 )
 
-type Trainer struct{}
+type Trainer struct {
+	db database.AppDatabase
+}
 
 func (t Trainer) Name() string {
 	return "trainer"
@@ -60,7 +63,7 @@ func (t Trainer) Handler(client *ds.Client, i *ds.InteractionCreate) error {
 		user = &u
 	}
 
-	u, err := db.GetOrInsertUser(user, context.Background())
+	u, err := t.db.GetOrInsertUser(user, context.Background())
 
 	if err != nil {
 		return client.Api.InteractionReplyTextEphemeral(i, "Failed to fetch user data. Please retry.")

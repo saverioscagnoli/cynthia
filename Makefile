@@ -18,7 +18,7 @@ make run-app-prod:
 	$(MAKE) run-app
 
 run-seed:
-	go run -mod=vendor ./store/seed.go
+	python python/seed/main.py
 
 app-healthcheck:
 	go run -mod=vendor ./cmd/healthcheck

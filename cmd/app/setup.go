@@ -118,20 +118,10 @@ func SetupBackend(addr string, port string, db database.AppDatabase, gen *ds.Sno
 	return router, nil
 }
 
-func SetupDiscordCommands(app *App, testGuild ds.Snowflake) (bool, error) {
-	commands.Init(app.db)
+func SetupDiscordCommands(app *App, testGuild *ds.Snowflake) error {
+	registry := commands.New(app.db)
 
-	app.ds.AddCommand(commands.Ping{})
-	app.ds.AddCommand(commands.Trainer{})
-	app.ds.AddCommand(commands.Encounter{})
-
-	if testGuild != "" {
-		err := app.ds.RegisterGuildCommands(testGuild)
-		return false, err
-	}
-
-	err := app.ds.RegisteGlobalCommands()
-	return true, err
+	return registry.Register(app.ds, testGuild)
 }
 
 func Init(dbPath string) (*App, error) {
@@ -184,17 +174,24 @@ func Init(dbPath string) (*App, error) {
 
 	app := NewApp(db, rt, cancelPkapi)
 
-	testGuild := os.Getenv("TEST_GUILD")
-	global, err := SetupDiscordCommands(app, testGuild)
+	var testGuild *ds.Snowflake = nil
+
+	g, found := os.LookupEnv("TEST_GUILD")
+
+	if found {
+		testGuild = &g
+	}
+
+	err = SetupDiscordCommands(app, testGuild)
 
 	if err != nil {
 		return app, err
 	}
 
-	if global {
-		slog.Info("Registered commands", "count", len(app.ds.Commands))
+	if found {
+		slog.Info("Registered guild commands", "count", len(app.ds.Commands), "guild", *testGuild)
 	} else {
-		slog.Info("Registered guild commands", "count", len(app.ds.Commands), "guild", testGuild)
+		slog.Info("Registered commands", "count", len(app.ds.Commands))
 	}
 
 	return app, nil

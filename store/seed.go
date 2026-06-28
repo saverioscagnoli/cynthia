@@ -12,6 +12,7 @@ import (
 	"log"
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -19,7 +20,7 @@ import (
 )
 
 const (
-	baseURL = "http://localhost:8000/api/v2"
+	baseURL = "http://localhost/api/v2"
 	workers = 10
 )
 
@@ -170,6 +171,34 @@ type StatEntry struct {
 	BaseStat  int
 }
 
+type Location struct {
+	ID     int
+	Name   string
+	Region string
+	Areas  []string // area URLs
+}
+
+type LocationArea struct {
+	ID         int
+	Name       string
+	GameIndex  int
+	LocationID int
+}
+
+type LocationAreaEncounter struct {
+	LocationAreaID  int
+	PokemonID       int
+	EncounterMethod string
+	MinLevel        int
+	MaxLevel        int
+	Chance          int
+}
+
+type locationAreaResult struct {
+	area       LocationArea
+	encounters []LocationAreaEncounter
+}
+
 func intOrZero(v any) int {
 	if i := nullInt(v); i != nil {
 		return *i
@@ -311,6 +340,26 @@ func createSchema(db *sql.DB) {
            name   TEXT    NOT NULL,
            sprite BLOB    NOT NULL
         )`,
+		`CREATE TABLE IF NOT EXISTS locations (
+            id     INTEGER PRIMARY KEY,
+            name   TEXT NOT NULL,
+            region TEXT
+        )`,
+		`CREATE TABLE IF NOT EXISTS location_areas (
+            id          INTEGER PRIMARY KEY,
+            name        TEXT    NOT NULL,
+            game_index  INTEGER NOT NULL,
+            location_id INTEGER NOT NULL REFERENCES locations(id)
+        )`,
+		`CREATE TABLE IF NOT EXISTS location_area_encounters (
+            location_area_id INTEGER NOT NULL REFERENCES location_areas(id),
+            pokemon_id       INTEGER NOT NULL REFERENCES pokemons(id),
+            encounter_method TEXT    NOT NULL,
+            min_level        INTEGER NOT NULL,
+            max_level        INTEGER NOT NULL,
+            chance           INTEGER NOT NULL,
+            PRIMARY KEY (location_area_id, pokemon_id, encounter_method)
+        )`,
 	}
 
 	for _, s := range stmts {
@@ -328,6 +377,12 @@ func getJSON(url string, dst any) error {
 		return err
 	}
 	defer r.Body.Close()
+
+	if r.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(r.Body)
+		return fmt.Errorf("GET %s: status %d: %s", url, r.StatusCode, strings.TrimSpace(string(body)))
+	}
+
 	return json.NewDecoder(r.Body).Decode(dst)
 }
 
@@ -1264,6 +1319,201 @@ func seedTrainerSprites(db *sql.DB) {
 	}
 }
 
+func fetchLocation(ref Ref) (Location, error) {
+	var raw map[string]any
+	if err := getJSON(ref.URL, &raw); err != nil {
+		return Location{}, fmt.Errorf("fetchLocation %s: %w", ref.Name, err)
+	}
+
+	region := ""
+	if r, ok := raw["region"].(map[string]any); ok {
+		region, _ = r["name"].(string)
+	}
+
+	var areaURLs []string
+	for _, a := range raw["areas"].([]any) {
+		aMap := a.(map[string]any)
+		if u, ok := aMap["url"].(string); ok {
+			areaURLs = append(areaURLs, u)
+		}
+	}
+
+	return Location{
+		ID:     int(raw["id"].(float64)),
+		Name:   raw["name"].(string),
+		Region: region,
+		Areas:  areaURLs,
+	}, nil
+}
+
+func fetchLocationArea(url string) (locationAreaResult, error) {
+	var raw map[string]any
+	if err := getJSON(url, &raw); err != nil {
+		return locationAreaResult{}, fmt.Errorf("fetchLocationArea %s: %w", url, err)
+	}
+
+	locationRaw, ok := raw["location"].(map[string]any)
+	if !ok {
+		return locationAreaResult{}, fmt.Errorf("fetchLocationArea %s: missing location", url)
+	}
+
+	areaID, ok := raw["id"].(float64)
+	if !ok {
+		return locationAreaResult{}, fmt.Errorf("fetchLocationArea %s: missing id", url)
+	}
+
+	gameIndex, _ := raw["game_index"].(float64)
+	name, _ := raw["name"].(string)
+
+	area := LocationArea{
+		ID:         int(areaID),
+		Name:       name,
+		GameIndex:  int(gameIndex),
+		LocationID: idFromURL(locationRaw["url"].(string)),
+	}
+
+	type encounterKey struct {
+		PokemonID int
+		Method    string
+	}
+	type encounterVal struct {
+		MinLevel int
+		MaxLevel int
+		Chance   int
+	}
+	best := map[encounterKey]encounterVal{}
+
+	pokemonEncounters, _ := raw["pokemon_encounters"].([]any)
+	for _, pe := range pokemonEncounters {
+		peMap, ok := pe.(map[string]any)
+		if !ok {
+			continue
+		}
+
+		pokemonRes, ok := peMap["pokemon"].(map[string]any)
+		if !ok {
+			continue
+		}
+
+		pokemonURL, _ := pokemonRes["url"].(string)
+		pokemonID := idFromURL(pokemonURL)
+		if pokemonID == 0 {
+			continue
+		}
+
+		versionDetails, _ := peMap["version_details"].([]any)
+		for _, vd := range versionDetails {
+			vdMap, ok := vd.(map[string]any)
+			if !ok {
+				continue
+			}
+
+			encounterDetails, _ := vdMap["encounter_details"].([]any)
+			for _, ed := range encounterDetails {
+				edMap, ok := ed.(map[string]any)
+				if !ok {
+					continue
+				}
+
+				methodRes, ok := edMap["method"].(map[string]any)
+				if !ok {
+					continue
+				}
+
+				method, _ := methodRes["name"].(string)
+				if method == "" {
+					continue
+				}
+
+				chance, _ := edMap["chance"].(float64)
+				minLevel, _ := edMap["min_level"].(float64)
+				maxLevel, _ := edMap["max_level"].(float64)
+
+				k := encounterKey{PokemonID: pokemonID, Method: method}
+				if existing, seen := best[k]; !seen || int(chance) > existing.Chance {
+					best[k] = encounterVal{
+						MinLevel: int(minLevel),
+						MaxLevel: int(maxLevel),
+						Chance:   int(chance),
+					}
+				}
+			}
+		}
+	}
+
+	encounters := make([]LocationAreaEncounter, 0, len(best))
+	for k, v := range best {
+		encounters = append(encounters, LocationAreaEncounter{
+			LocationAreaID:  area.ID,
+			PokemonID:       k.PokemonID,
+			EncounterMethod: k.Method,
+			MinLevel:        v.MinLevel,
+			MaxLevel:        v.MaxLevel,
+			Chance:          v.Chance,
+		})
+	}
+
+	return locationAreaResult{area: area, encounters: encounters}, nil
+}
+
+func seedLocations(db *sql.DB) {
+	log.Println("=== seeding locations + location_areas + encounters ===")
+	refs := collectPages[Ref](baseURL + "/location?limit=1000&offset=0")
+	fmt.Printf("fetching %d locations\n", len(refs))
+
+	for loc := range fanOut(refs, fetchLocation) {
+		if _, err := db.Exec(
+			`INSERT OR REPLACE INTO locations (id, name, region) VALUES (?, ?, ?)`,
+			loc.ID, loc.Name, loc.Region,
+		); err != nil {
+			log.Println("insert location:", err)
+			continue
+		}
+
+		// Fetch each area sequentially per location (areas are small)
+		for _, areaURL := range loc.Areas {
+			res, err := fetchLocationArea(areaURL)
+			if err != nil {
+				log.Println("fetch area:", err)
+				continue
+			}
+
+			if _, err := db.Exec(
+				`INSERT OR REPLACE INTO location_areas (id, name, game_index, location_id) VALUES (?, ?, ?, ?)`,
+				res.area.ID, res.area.Name, res.area.GameIndex, res.area.LocationID,
+			); err != nil {
+				log.Println("insert location_area:", err)
+				continue
+			}
+
+			tx, err := db.Begin()
+			if err != nil {
+				log.Println("begin tx:", err)
+				continue
+			}
+
+			for _, enc := range res.encounters {
+				if _, err := tx.Exec(`
+                    INSERT OR REPLACE INTO location_area_encounters
+                        (location_area_id, pokemon_id, encounter_method, min_level, max_level, chance)
+                    VALUES (?, ?, ?, ?, ?, ?)`,
+					enc.LocationAreaID, enc.PokemonID, enc.EncounterMethod,
+					enc.MinLevel, enc.MaxLevel, enc.Chance,
+				); err != nil {
+					log.Printf("insert encounter area=%d pokemon=%d: %v", enc.LocationAreaID, enc.PokemonID, err)
+				}
+			}
+
+			if err := tx.Commit(); err != nil {
+				log.Println("commit encounters:", err)
+				continue
+			}
+
+			log.Printf("wrote area %s (%d encounters)", res.area.Name, len(res.encounters))
+		}
+	}
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 func main() {
@@ -1301,7 +1551,32 @@ func main() {
 	//seedPokemonMoves(db)
 	//seedHeldItems(db)
 	//seedEvolutionDetails(db)
-	seedTrainerSprites(db)
+	// seedTrainerSprites(db)
+	seedLocations(db)
+
+	i := 0
+
+	for {
+		res, err := http.Get(baseURL + "/location/" + strconv.Itoa(i))
+
+		if err != nil {
+			break
+		}
+
+		var body map[string]string
+
+		json.NewDecoder(res.Body).Decode(&body)
+
+		if len(body) == 0 {
+			break
+		}
+
+		if strings.Contains(body["name"], "route") {
+			fmt.Println(body["name"])
+		}
+
+		i++
+	}
 
 	fmt.Println("All done.")
 }
